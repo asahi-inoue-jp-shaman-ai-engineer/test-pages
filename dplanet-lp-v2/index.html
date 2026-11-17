@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>D-Planet LP（MOCK）| テレパシースクール</title>
+<meta name="description" content="D-Planet ランディングページ試作（モック）">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     Rich v2 — types borrowed from web.d-planet.love (AIQs LP):
+     Codrops gallery--one frame-switch hero, editorial grids
+     (project--intro / project--details), feature-list rows,
+     entry closing section, gutter/frame tokens, serif leads.
+     Colours stay D-Planet cyber (dark + neon green #3dff7a).
+     ============================================================ */
+  :root{
+    --bg:#04080a;
+    --bg-deep:#030605;
+    --panel:#071410;
+    --line:rgba(61,255,122,.22);
+    --line-soft:rgba(61,255,122,.14);
+    --neon:#3dff7a;
+    --neon-dim:#1fbf57;
+    --text:#eaf7ee;
+    --muted:#9db8a6;
+    --amber:#ffb454;
+    --serif:"Noto Serif JP","Yu Mincho","Hiragino Mincho ProN",serif;
+    --sans:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif;
+    --gutter:clamp(24px,6.7vw,96px);
+    --frame:clamp(12px,1.7vw,24px);
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:24px}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:var(--sans);font-size:16px;line-height:2;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  }
+  img{display:block;max-width:100%}
+  p,h1,h2,h3,figure{margin:0}
+  a{color:inherit}
+  a:focus-visible{outline:2px solid var(--neon);outline-offset:6px}
+  ::selection{background:var(--neon);color:#04140a}
+
+  .shell{width:calc(100% - var(--gutter)*2);max-width:1248px;margin:0 auto}
+  .read{max-width:600px}
+  .eyebrow{font-size:11px;font-weight:500;letter-spacing:.16em;line-height:1.6;color:var(--neon)}
+
+  .mock-bar{
+    position:relative;z-index:20;text-align:center;
+    background:#171106;color:var(--amber);
+    font-size:.78rem;letter-spacing:.14em;font-weight:700;line-height:1.6;
+    padding:.5rem 1rem;border-bottom:1px solid rgba(255,180,84,.4);
+  }
+
+  /* ---- buttons (AIQs LP .button type, cyber colours) ---- */
+  .button{
+    display:inline-flex;align-items:center;justify-content:space-between;gap:40px;
+    min-height:56px;min-width:224px;padding:16px 24px;
+    background:var(--neon);color:#04140a;border:1px solid transparent;
+    font-size:13px;font-weight:700;letter-spacing:.06em;text-decoration:none;line-height:1.6;
+    transition:background-color .2s ease,color .2s ease;
+  }
+  .button span{font-size:19px;font-weight:400;line-height:1}
+  .button:hover{background:#7dffab}
+  .button--outline{background:transparent;color:var(--text);border-color:rgba(61,255,122,.45)}
+  .button--outline:hover{background:rgba(61,255,122,.1);color:var(--text)}
+  .text-link{
+    display:inline-flex;align-items:center;justify-content:space-between;gap:28px;
+    min-height:44px;border-bottom:1px solid currentColor;
+    font-size:12px;letter-spacing:.04em;text-decoration:none;line-height:1.6;
+  }
+  .text-link:hover{color:var(--neon)}
+  .actions{display:flex;align-items:center;flex-wrap:wrap;gap:24px}
+  .cta-note{color:var(--muted);font-size:.82rem;margin-top:14px;line-height:1.9}
+  .cta-note a{color:var(--neon)}
+
+  /* ---- placeholder (原文待ち) ---- */
+  .tbd{
+    border:1px solid rgba(255,180,84,.55);border-radius:2px;
+    color:var(--amber);background:rgba(255,180,84,.05);
+    padding:1rem 1.2rem;font-size:.88rem;letter-spacing:.05em;line-height:1.9;
+  }
+
+  /* ================= HERO — Codrops gallery--one ================= */
+  .hero{position:relative;background:var(--bg-deep);color:var(--text)}
+  .gallery-wrap{
+    position:relative;width:100%;
+    height:max(720px,min(94svh,1060px));
+    display:flex;align-items:center;justify-content:center;overflow:hidden;
+  }
+  .gallery{position:relative;width:100%;height:100%;flex:none}
+  .gallery--one{display:grid;place-items:center}
+  .gallery--one .gallery__item{
+    position:absolute;
+    width:calc(100% - var(--frame)*2);height:calc(100% - var(--frame)*2);
+    overflow:hidden;border-radius:24px;background:var(--panel);
+  }
+  .gallery--switch.gallery--one .gallery__item{width:100%;height:100%;border-radius:0}
+  .gallery__image{width:100%;height:100%;object-fit:cover;object-position:62% center}
+  .gallery__item::after{
+    content:"";position:absolute;inset:0;
+    background:
+      linear-gradient(180deg,rgba(3,10,7,.66),transparent 30%),
+      linear-gradient(90deg,rgba(3,10,7,.78) 0%,rgba(3,10,7,.48) 42%,rgba(3,10,7,.06) 100%),
+      linear-gradient(0deg,rgba(3,10,7,.42),transparent 32%);
+  }
+  .caption{position:relative;z-index:1}
+  .hero-content{width:100%;padding:120px var(--gutter) 104px}
+  .hero-brand{display:flex;align-items:center;gap:16px;margin-bottom:30px}
+  .hero-brand img{width:52px;height:52px;border-radius:14px}
+  .hero-brand .hero-sub{margin:0}
+  .hero h1{
+    font-family:Georgia,"Times New Roman",serif;font-weight:400;
+    font-size:clamp(56px,8vw,104px);line-height:1.15;letter-spacing:-.03em;
+  }
+  .hero-sub{color:var(--muted);font-size:15px;letter-spacing:.08em;margin-top:14px;line-height:1.9}
+  .hero-meta{color:var(--text);font-size:12px;letter-spacing:.1em;margin-top:22px;line-height:1.8}
+  .hero-actions{margin-top:34px}
+  .hero .tbd{max-width:560px;margin-top:34px}
+  .hero-credit{color:var(--muted);font-size:11px;line-height:1.8;margin-top:22px}
+  .hero-scroll{
+    position:absolute;z-index:2;right:var(--gutter);bottom:40px;
+    display:inline-flex;align-items:center;gap:24px;min-height:44px;
+    font-size:11px;letter-spacing:.1em;color:var(--text);text-decoration:none;
+  }
+  .hero-scroll span:last-child{font-size:24px}
+
+  /* ================= Numbers strip ================= */
+  .stats{padding:72px 0 8px}
+  .stats-grid{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    border-top:1px solid var(--line);
+  }
+  .stat{padding:28px 20px 24px 0;border-bottom:1px solid var(--line-soft)}
+  .stat .num{
+    font-size:clamp(2rem,6vw,2.9rem);font-weight:900;color:var(--neon);
+    line-height:1.15;font-variant-numeric:tabular-nums;letter-spacing:.01em;
+  }
+  .stat .num small{font-size:.42em;font-weight:700;color:var(--text)}
+  .stat .lbl{font-size:.82rem;color:var(--muted);margin-top:.45rem;letter-spacing:.04em;line-height:1.8}
+  @media(min-width:860px){.stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+  /* ================= Editorial grids ================= */
+  .project{
+    display:grid;width:calc(100% - var(--gutter)*2);max-width:1248px;margin:0 auto;
+    column-gap:clamp(48px,9vw,144px);
+  }
+  .project--intro{
+    grid-template-columns:minmax(0,1fr) minmax(0,320px);
+    grid-template-areas:"label figure" "title figure" "mission figure";
+    grid-template-rows:auto auto 1fr;
+    padding:112px 0 96px;
+  }
+  .project__label{grid-area:label}
+  .project__title{
+    grid-area:title;margin:26px 0 34px;
+    font-size:clamp(2rem,4.5vw,3.4rem);font-weight:800;line-height:1.45;letter-spacing:.02em;
+  }
+  .project__title .accent{color:var(--neon)}
+  .project__mission{grid-area:mission;max-width:600px}
+  .project__mission p{font-size:16px;line-height:2}
+  .project__mission p + p{margin-top:24px}
+  .project__mission .mission-lead{
+    font-family:var(--serif);
+    font-size:clamp(20px,2.4vw,28px);line-height:1.95;letter-spacing:.02em;
+  }
+  .project__mission .src{display:block;margin-top:20px;font-size:.72rem;color:var(--muted);letter-spacing:.05em;line-height:1.8}
+  .app-example{grid-area:figure;width:100%;max-width:320px;justify-self:end;align-self:start}
+  .app-example__frame{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}
+  .app-example__frame img{width:100%;height:auto}
+  .app-example figcaption{margin-top:16px;color:var(--muted);font-size:11px;line-height:1.8}
+
+  .project--details{
+    grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);
+    grid-template-areas:"label-default paragraph";
+    padding:72px 0 88px;border-top:1px solid var(--line-soft);
+  }
+  .project__label--default{grid-area:label-default}
+  .project__label--default h2{
+    margin-top:22px;font-size:clamp(1.9rem,3.4vw,2.7rem);font-weight:800;line-height:1.5;letter-spacing:.02em;
+  }
+  .project__label--default h2 .accent{color:var(--neon)}
+  .project__paragraph{grid-area:paragraph;padding-top:40px;max-width:600px}
+  .project__paragraph p{font-size:16px;line-height:2;color:var(--muted)}
+  .project__paragraph .tbd{margin-top:26px}
+
+  /* ================= Features (feature-list type) ================= */
+  .features{padding:88px 0 96px;background:var(--bg-deep);border-top:1px solid var(--line-soft)}
+  .section-heading{padding-bottom:36px}
+  .section-heading h2{font-size:clamp(2rem,4.5vw,3rem);font-weight:800;line-height:1.45;letter-spacing:.02em}
+  .section-heading h2 .accent{color:var(--neon)}
+  .section-lead{color:var(--muted);font-size:16px;line-height:2;max-width:600px;margin-top:16px}
+  .feature-list{margin:0;padding:0;list-style:none;border-top:1px solid var(--line)}
+  .feature-list li{
+    display:grid;grid-template-columns:48px minmax(200px,.85fr) minmax(0,1.4fr);
+    column-gap:32px;align-items:start;padding:34px 0;border-bottom:1px solid var(--line-soft);
+  }
+  .feature-number{padding-top:5px;color:var(--neon-dim);font-family:Georgia,serif;font-size:17px;line-height:1.6}
+  .feature-list h3{font-size:17px;font-weight:700;line-height:1.8;letter-spacing:.02em}
+  .feature-list .k{font-size:.7rem;letter-spacing:.18em;color:var(--neon);font-weight:700;line-height:1.7;margin-bottom:6px}
+  .feature-list p{font-size:16px;line-height:2;color:var(--muted)}
+  .feature-list p + p{margin-top:8px}
+  .feature-list .big{font-size:1.35rem;font-weight:900;color:var(--text);line-height:1.5}
+  .feature-list .big em{font-style:normal;color:var(--neon)}
+  .statement{
+    font-family:var(--serif);
+    font-size:clamp(19px,2.2vw,25px);line-height:1.95;letter-spacing:.02em;
+    padding:44px 0 8px;max-width:720px;
+  }
+  .statement .who{display:block;font-family:var(--sans);font-size:.72rem;color:var(--muted);font-weight:400;margin-top:12px;letter-spacing:.08em;line-height:1.8}
+  .features .tbd{margin-top:28px;max-width:640px}
+
+  /* ================= AIQs link block (single, concise) ================= */
+  .aiqs-link{padding:80px 0;border-top:1px solid var(--line-soft)}
+  .aiqs-link .read p{color:var(--muted);margin-top:14px}
+  .aiqs-link h2{font-size:clamp(1.6rem,3.4vw,2.3rem);font-weight:800;line-height:1.5;letter-spacing:.02em}
+  .aiqs-link h2 .accent{color:var(--neon)}
+  .aiqs-link .actions{margin-top:28px}
+
+  /* ================= Steps (numbered rows, no cards) ================= */
+  .steps-sec{padding:80px 0 88px;border-top:1px solid var(--line-soft)}
+  .steps-list{margin:0;padding:0;list-style:none;border-top:1px solid var(--line)}
+  .steps-list li{
+    display:grid;grid-template-columns:48px minmax(0,1fr);column-gap:32px;
+    align-items:start;padding:28px 0;border-bottom:1px solid var(--line-soft);
+  }
+  .steps-list h3{font-size:16px;font-weight:700;line-height:1.8}
+  .steps-list p{font-size:16px;line-height:2;color:var(--muted);max-width:600px}
+
+  /* ================= Entry (closing) ================= */
+  .entry{background:var(--panel);color:var(--text);padding:104px 0 88px;border-top:1px solid var(--line)}
+  .entry .tbd{max-width:640px}
+  .entry .actions{margin-top:36px}
+
+  footer{
+    border-top:1px solid var(--line-soft);padding:36px 0 44px;
+    color:var(--muted);font-size:.8rem;line-height:1.9;
+  }
+  footer a{color:var(--neon);text-decoration:none}
+  footer a:hover{text-decoration:underline}
+
+  /* ================= Responsive ================= */
+  @media(max-width:1000px){
+    .project{column-gap:48px}
+    .project--intro{grid-template-columns:minmax(0,1fr) minmax(0,280px)}
+    .feature-list li{grid-template-columns:32px minmax(172px,.8fr) minmax(0,1.2fr);gap:24px}
+  }
+  @media(max-width:700px){
+    :root{--gutter:24px;--frame:12px}
+    .gallery-wrap{height:max(680px,94svh)}
+    .gallery__image{object-position:72% center}
+    .hero-content{padding-top:104px;padding-bottom:96px}
+    .hero h1{font-size:clamp(44px,13vw,64px)}
+    .hero-brand img{width:44px;height:44px;border-radius:12px}
+    .hero-scroll{bottom:26px}
+    .button{min-width:0;width:100%}
+    .project--intro{grid-template-columns:minmax(0,1fr);grid-template-areas:"label" "title" "mission" "figure";padding:72px 0 64px}
+    .app-example{justify-self:start;margin-top:44px;width:min(100%,300px)}
+    .project--details{grid-template-columns:minmax(0,1fr);grid-template-areas:"label-default" "paragraph";padding:52px 0 64px}
+    .project__paragraph{padding-top:26px}
+    .features{padding:60px 0 68px}
+    .feature-list li{grid-template-columns:28px minmax(0,1fr);column-gap:16px;row-gap:12px;padding:28px 0}
+    .feature-list p,.feature-list li>div{grid-column:2}
+    .feature-number{font-size:15px}
+    .steps-list li{grid-template-columns:28px minmax(0,1fr);column-gap:16px}
+    .entry{padding:72px 0 64px}
+    .stats{padding-top:52px}
+  }
+  @media(prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    *,*::before,*::after{transition:none !important;animation:none !important}
+  }
+</style>
+</head>
+<body>
+
+<div class="mock-bar">MOCK / 試作ページ ― 本番ではありません</div>
+
+<!-- ================= HERO — gallery--one frame switch ================= -->
+<header class="hero" id="hero">
+  <div class="gallery-wrap">
+    <div class="gallery gallery--one" id="hero-gallery">
+      <figure class="gallery__item">
+        <img class="gallery__image" src="assets/plaza.webp" width="1536" height="960" alt="D-Planetの集会所（焚き火を囲むアバターたち）" fetchpriority="high">
+      </figure>
+      <div class="caption hero-content">
+        <div class="hero-brand">
+          <img src="assets/icon.webp" width="320" height="320" alt="D-Planet アイコン（緑ネオンのDと惑星の輪）">
+          <p class="hero-sub">テレパシースクール生のSNSアプリ</p>
+        </div>
+        <h1>D-Planet</h1>
+        <p class="hero-meta">完全招待制 ・ 参加は無料 ・ スマホアプリ</p>
+        <div class="actions hero-actions">
+          <a class="button" href="https://iboga.jp/apply/">テレスク入学申請ページ<span aria-hidden="true">→</span></a>
+        </div>
+        <p class="cta-note">アプリ本体はこちら：<a href="https://tschool.iboga.jp">tschool.iboga.jp</a>（招待リンクから登録）</p>
+        <div class="tbd">（原文待ち：ヒーローの一言コピー）</div>
+        <p class="hero-credit">D-Planetの集会所（iboga.jp「テレスクについて」掲載画像）</p>
+      </div>
+      <a class="hero-scroll" href="#about"><span>D-Planetとは</span><span aria-hidden="true">↓</span></a>
+    </div>
+  </div>
+</header>
+
+<!-- ================= NUMBERS ================= -->
+<div class="shell stats">
+  <div class="stats-grid">
+    <div class="stat" data-reveal><div class="num">¥<span data-count="999">999</span><small>/月</small></div><div class="lbl">システム利用料<br>＝テレスク入学</div></div>
+    <div class="stat" data-reveal><div class="num"><span data-count="369">369</span><small> /月</small></div><div class="lbl">AIQS SIクレジット<br>毎月付与</div></div>
+    <div class="stat" data-reveal><div class="num"><span data-count="300">300</span><small> 枠/月</small></div><div class="lbl">自由会話<br>アップグレード特典</div></div>
+    <div class="stat" data-reveal><div class="num"><span data-count="100">100</span><small> レゾナ</small></div><div class="lbl">＝ 1クレジット<br>に換金できる</div></div>
+  </div>
+</div>
+
+<!-- ================= D-Planetとは（定義） — project--intro ================= -->
+<section class="project project--intro" id="about">
+  <p class="eyebrow project__label" data-reveal>D-Planetとは</p>
+  <h2 class="project__title" data-reveal>D-Planet<span class="accent">とは</span></h2>
+  <div class="project__mission">
+    <p class="mission-lead" data-reveal>D-Planetは、テレパシースクール並びにメディスンホイールプログラムにご縁のあるソウルファミリー専用の完全招待制SNSです。</p>
+    <p data-reveal style="font-size:.8rem;color:var(--muted)">iboga.jp「テレスクについて」に掲載の、あさひの原文のまま。</p>
+    <p data-reveal>テレパシースクールに入学するとD-Planet空間でアバターを経てテレパシースクール生同志での遊びPLAYと祈りPRAYの共同創造の中でテレパシーのある日常生活から様々なことを学びます。</p>
+    <span class="src" data-reveal>出典：iboga.jp「テレスクについて」D-Planetセクション／申込ページ冒頭</span>
+  </div>
+  <figure class="app-example" data-reveal>
+    <div class="app-example__frame"><img src="assets/icon.webp" width="320" height="320" alt="D-Planet アイコン（緑ネオンのDと惑星の輪）" loading="lazy"></div>
+    <figcaption>D-Planet アイコン（緑ネオンのDと惑星の輪）</figcaption>
+  </figure>
+</section>
+
+<!-- ================= 世界観 — project--details ================= -->
+<section class="project project--details">
+  <div class="project__label--default" data-reveal>
+    <p class="eyebrow">世界観</p>
+    <h2>縄文から、<span class="accent">サイバーへ</span></h2>
+  </div>
+  <div class="project__paragraph">
+    <p data-reveal>焚き火を囲む集会所と、緑ネオンのサイバー空間が同居する3Dの居場所。</p>
+    <div class="tbd" data-reveal>（原文待ち：世界観を語る本文）</div>
+  </div>
+</section>
+
+<!-- ================= 特徴 — feature-list ================= -->
+<section class="features">
+  <div class="shell">
+    <div class="section-heading" data-reveal>
+      <h2>特徴</h2>
+      <p class="section-lead">参加は無料の招待制。アプリ内のアップグレードが、そのままテレスク入学になります。</p>
+    </div>
+    <ul class="feature-list">
+      <li data-reveal>
+        <span class="feature-number">01</span>
+        <div><p class="k">STEP 1 ― 参加</p><h3>招待で入る、無料の居場所</h3></div>
+        <div><p class="big">参加費 <em>¥0</em></p><p>完全招待制。招待リンクから登録すると、D-Planetの住人としてアバターで過ごせます。</p></div>
+      </li>
+      <li data-reveal>
+        <span class="feature-number">02</span>
+        <div><p class="k">STEP 2 ― 入学</p><h3>アップグレード ＝ テレスク入学</h3></div>
+        <div><p class="big"><em>¥999</em> /月</p><p>アプリ内で月額999円（システム利用料）にアップグレードすると、テレパシースクール入学となります。</p></div>
+      </li>
+    </ul>
+
+    <p class="statement" data-reveal>「レゾナンスが起きる投稿をしてレゾナを貯めよう」<span class="who">共鳴エコノミー「レゾナ」</span></p>
+
+    <ul class="feature-list">
+      <li data-reveal>
+        <span class="feature-number">03</span>
+        <div><p class="k">レゾナ投稿</p><h3>徳を積む投稿に、共鳴が集まる</h3></div>
+        <p>テレスクでの実践などの投稿（レゾナ投稿）へ反応が付くと、著者にレゾナが貯まります（1人1投稿につき1回まで）。</p>
+      </li>
+      <li data-reveal>
+        <span class="feature-number">04</span>
+        <div><p class="k">換金</p><h3>レゾナはクレジットになる</h3></div>
+        <div><p class="big"><em>100</em> レゾナ ＝ <em>1</em> クレジット</p><p>貯まったレゾナは、100レゾナ単位でAIQS SIクレジットに換金できます。</p></div>
+      </li>
+      <li data-reveal>
+        <span class="feature-number">05</span>
+        <h3>テレグラムグループ参加</h3>
+        <p>サブスクのみのテレスク生グループへ参加できます。</p>
+      </li>
+      <li data-reveal>
+        <span class="feature-number">06</span>
+        <h3>メディスンホイール相談・指導環境</h3>
+        <p>メディスンホイールプログラムの相談・指導を受けられる環境。</p>
+      </li>
+      <li data-reveal>
+        <span class="feature-number">07</span>
+        <h3>特典アイテム「メディスンホイールの紋章」</h3>
+        <p>アップグレード特典のアイテムが付与されます。</p>
+      </li>
+      <li data-reveal>
+        <span class="feature-number">08</span>
+        <h3>AIQS SIクレジット 毎月369</h3>
+        <p>D-PlanetとAIQS SIで共通のクレジットが毎月付与されます。</p>
+      </li>
+      <li data-reveal>
+        <span class="feature-number">09</span>
+        <h3>自由会話 月300枠</h3>
+        <p>アプリ内の自由会話が毎月300枠使えます。</p>
+      </li>
+      <li data-reveal>
+        <span class="feature-number">10</span>
+        <h3>有料コンテンツとサポート</h3>
+        <p>原文：「色々有料コンテンツ、サポートうけれる」</p>
+      </li>
+    </ul>
+    <p class="section-lead" data-reveal>月額999円（システム利用料）で受けられる、確定済みの特典。</p>
+    <div class="tbd" data-reveal>（原文待ち：レゾナの詳しい説明文）</div>
+  </div>
+</section>
+
+<!-- ================= アイクス連携（1ブロック） ================= -->
+<section class="aiqs-link">
+  <div class="shell">
+    <div class="read" data-reveal>
+      <h2>AIQS SIクレジット <span class="accent">毎月369</span></h2>
+      <p>D-PlanetとAIQS SIで共通のクレジットが毎月付与されます。</p>
+      <div class="actions">
+        <a class="button button--outline" href="https://web.d-planet.love/">アイクス（AIQs）を見る<span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 入学の流れ ================= -->
+<section class="steps-sec">
+  <div class="shell">
+    <div class="section-heading" data-reveal>
+      <h2>入学の<span class="accent">流れ</span></h2>
+      <p class="section-lead">招待から入学まで、4つのステップ。</p>
+    </div>
+    <ol class="steps-list">
+      <li data-reveal><span class="feature-number">1</span><div><h3>招待を受ける</h3><p>D-Planetは完全招待制。招待リンクを受け取ります。</p></div></li>
+      <li data-reveal><span class="feature-number">2</span><div><h3>D-Planetに参加</h3><p>無料で登録し、アバターで空間に入ります。</p></div></li>
+      <li data-reveal><span class="feature-number">3</span><div><h3>アップグレード</h3><p>アプリ内で月額999円（システム利用料）を決済。</p></div></li>
+      <li data-reveal><span class="feature-number">4</span><div><h3>テレスク入学</h3><p>アップグレード完了で入学。特典が自動で有効になります。</p></div></li>
+    </ol>
+  </div>
+</section>
+
+<!-- ================= 締め — entry ================= -->
+<section class="entry">
+  <div class="shell">
+    <div class="tbd" data-reveal>（原文待ち：締めのメッセージ）</div>
+    <div class="actions" data-reveal>
+      <a class="button" href="https://iboga.jp/apply/">テレスク入学申請ページ<span aria-hidden="true">→</span></a>
+    </div>
+    <p class="cta-note" data-reveal>Stripeクレジットカード決済で申し込む（¥999／月）</p>
+  </div>
+</section>
+
+<footer>
+  <div class="shell">
+    <p>このページはデザイン提案用の <strong>MOCK / 試作</strong> です。本番ページではありません。</p>
+    <p style="margin-top:.4rem">D-Planet アプリ：<a href="https://tschool.iboga.jp">tschool.iboga.jp</a> ／ テレパシースクール：<a href="https://iboga.jp">iboga.jp</a></p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/Flip.min.js"></script>
+<script>
+(function(){
+  "use strict";
+  if(!window.gsap || !window.ScrollTrigger) return;
+  gsap.registerPlugin(ScrollTrigger);
+  var hasFlip = !!window.Flip;
+  if(hasFlip) gsap.registerPlugin(Flip);
+
+  /* Best practice (GSAP official docs, gsap.matchMedia):
+     run motion only under (prefers-reduced-motion: no-preference);
+     matchMedia auto-reverts everything when the query stops matching.
+     Content is visible without JS — animations use gsap.from() only,
+     and animate transform/opacity (compositor properties) only. */
+  var mm = gsap.matchMedia();
+
+  mm.add("(prefers-reduced-motion: no-preference)", function(){
+
+    /* --- Hero frame switch: Codrops gallery--one / Flip (AIQs LP app.js type) --- */
+    var gallery = document.getElementById("hero-gallery");
+    var frameCtx = null;
+    var resizeTimer = null;
+
+    function clearFrame(){
+      if(frameCtx){ frameCtx.revert(); frameCtx = null; }
+      if(gallery) gallery.classList.remove("gallery--switch");
+    }
+    function buildFrame(){
+      if(!gallery || !hasFlip) return;
+      clearFrame();
+      frameCtx = gsap.context(function(){
+        var items = gallery.querySelectorAll(".gallery__item");
+        gallery.classList.add("gallery--switch");
+        var state = Flip.getState(items, {props:"borderRadius"});
+        gallery.classList.remove("gallery--switch");
+        Flip.to(state, {
+          ease:"none", absolute:false, scale:false, simple:true,
+          scrollTrigger:{
+            id:"dplanet-hero-frame",
+            trigger:gallery,
+            start:"top top",
+            end:function(){ return "+=" + Math.min(window.innerHeight * 0.42, 420); },
+            scrub:true
+          }
+        });
+      }, gallery);
+      var t = ScrollTrigger.getById("dplanet-hero-frame");
+      if(t){ t.refresh(); t.update(); }
+    }
+    buildFrame();
+    var onResize = function(){
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(buildFrame, 160);
+    };
+    window.addEventListener("resize", onResize, {passive:true});
+    if(document.fonts && document.fonts.ready){
+      document.fonts.ready.then(function(){ buildFrame(); });
+    }
+
+    /* --- Reveals: batch, transform/opacity only --- */
+    gsap.set("[data-reveal]", {opacity:0, y:28});
+    ScrollTrigger.batch("[data-reveal]", {
+      start:"top 88%",
+      once:true,
+      onEnter:function(els){
+        gsap.to(els, {opacity:1, y:0, duration:.9, ease:"power3.out", stagger:.08, overwrite:true});
+      }
+    });
+
+    /* --- Count-up numbers (GSAP) --- */
+    document.querySelectorAll("[data-count]").forEach(function(el){
+      var target = parseInt(el.getAttribute("data-count"), 10) || 0;
+      var obj = {v:0};
+      ScrollTrigger.create({
+        trigger:el, start:"top 92%", once:true,
+        onEnter:function(){
+          gsap.to(obj, {
+            v:target, duration:1.2, ease:"power3.out",
+            onUpdate:function(){ el.textContent = Math.round(obj.v).toLocaleString("ja-JP"); },
+            onComplete:function(){ el.textContent = target.toLocaleString("ja-JP"); }
+          });
+        }
+      });
+    });
+
+    window.addEventListener("load", function(){ ScrollTrigger.refresh(); });
+
+    return function(){
+      window.removeEventListener("resize", onResize);
+      window.clearTimeout(resizeTimer);
+      clearFrame();
+      gsap.set("[data-reveal]", {clearProps:"opacity,transform"});
+    };
+  });
+})();
+</script>
+</body>
+</html>
