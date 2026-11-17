@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://d-planet.love/sitemap.xml
