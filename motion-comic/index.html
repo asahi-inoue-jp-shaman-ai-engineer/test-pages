@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>動く漫画 ― 2.5Dモーションコミック試作 | TEST</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #070a16; }
+  body {
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", sans-serif;
+    color: #dfe6f5; min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 22px 10px 34px;
+  }
+  header { width: min(1120px, 97vw); display: flex; align-items: center; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
+  header h1 { font-size: 17px; font-weight: 600; letter-spacing: .06em; }
+  .badge {
+    font-size: 11px; font-weight: 700; letter-spacing: .12em;
+    color: #0b0e1a; background: #ffd94d; border-radius: 4px; padding: 3px 8px;
+  }
+  header p { width: 100%; font-size: 12px; color: #93a0bd; letter-spacing: .03em; }
+
+  #stage {
+    position: relative; width: min(1120px, 97vw); aspect-ratio: 16 / 10;
+    background: #000; border-radius: 10px; overflow: hidden;
+    box-shadow: 0 18px 50px rgba(0,0,0,.55), 0 0 0 1px rgba(140,160,220,.14);
+    cursor: pointer; touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .layer { position: absolute; left: 0; top: 0; will-change: transform; user-select: none; -webkit-user-drag: none; }
+  #bg, #char, #fx { pointer-events: none; }
+  #vig {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 108% 88% at 50% 46%, transparent 62%, rgba(2,4,12,.42) 100%);
+  }
+  #fade { position: absolute; inset: 0; background: #000; pointer-events: none; opacity: 1; }
+
+  /* ナレーション（吹き出し）レイヤー：原作の白枠・縦書きを再現 */
+  #bubble {
+    position: absolute; left: 5.5%; top: 9%;
+    background: #fff; color: #111; border: 2px solid #111;
+    padding: 16px 10px; box-shadow: 3px 4px 0 rgba(0,0,0,.35);
+    writing-mode: vertical-rl; text-orientation: upright;
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", "Noto Serif JP", serif;
+    font-size: clamp(15px, 2.6vw, 21px); letter-spacing: .14em; line-height: 1;
+    opacity: 0; transform: scale(.55) translateY(12px);
+    transition: opacity .30s ease, transform .55s cubic-bezier(.2, 1.6, .4, 1);
+    pointer-events: none;
+  }
+  #bubble.show { opacity: 1; transform: scale(1) translateY(0); }
+
+  #testmark {
+    position: absolute; right: 10px; top: 10px; z-index: 5;
+    font-size: 10px; letter-spacing: .14em; color: rgba(255,255,255,.85);
+    background: rgba(5,8,20,.55); border: 1px solid rgba(255,255,255,.25);
+    padding: 3px 7px; border-radius: 4px; pointer-events: none;
+  }
+
+  .controls { width: min(1120px, 97vw); display: flex; align-items: center; gap: 14px; margin-top: 14px; flex-wrap: wrap; }
+  #replay {
+    font: inherit; font-size: 13px; letter-spacing: .05em;
+    color: #0b0e1a; background: #aebfff; border: none; border-radius: 999px;
+    padding: 8px 18px; cursor: pointer; font-weight: 700;
+  }
+  #replay:hover { background: #c6d2ff; }
+  #replay.pulse { animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+  #hint { font-size: 12px; color: #93a0bd; }
+  footer { width: min(1120px, 97vw); margin-top: 16px; font-size: 12px; line-height: 1.8; color: #7e8cab; }
+  footer b { color: #b9c4de; font-weight: 600; }
+</style>
+</head>
+<body>
+<header>
+  <h1>動く漫画 ― 2.5Dモーションコミック試作</h1>
+  <span class="badge">TEST / 試作</span>
+  <p>絵は元のまま。レイヤー分離（背景／キャラ切り抜き／文字）とカメラワークだけで動かす実験ページです。</p>
+</header>
+
+<div id="stage" role="button" aria-label="モーションコミックのステージ。タップで進みます">
+  <img class="layer" id="bg" src="scene-bg.jpg" alt="夜の海を見晴らす窓辺の場面（背景）" draggable="false">
+  <canvas class="layer" id="fx"></canvas>
+  <img class="layer" id="char" src="char.webp" alt="窓辺に立つ教授（切り抜きレイヤー）" draggable="false">
+  <div id="bubble">……来たな。</div>
+  <div id="vig"></div>
+  <div id="fade"></div>
+  <div id="testmark">TEST・試作</div>
+</div>
+
+<div class="controls">
+  <button id="replay" type="button">↻ もう一度</button>
+  <span id="hint">自動再生中…（ステージをタップすると先へ進みます）</span>
+</div>
+
+<footer>
+  <b>使用素材:</b> 漫画『デジタルツインレイ〜ASI物語〜』第1話・2ページ目 第1コマ（夜の海と教授）<br>
+  <b>構成:</b> 背景レイヤー（元画像）／キャラレイヤー（rembgで背景除去した切り抜き）／きらめきFX（Canvas）／ナレーションレイヤー（HTML）。外部ライブラリ不使用・素のCSS/JSのみ。<br>
+  <b>動き:</b> ゆっくりしたカメラの寄り＋パンとレイヤー間パララックス、キャラの呼吸のような微かな浮遊、ナレーションのポップイン、星のまたたきと流れ星。
+</footer>
+
+<script>
+(function () {
+  'use strict';
+  var DUR = 13;               // シーケンス総尺（秒）
+  var BUBBLE_AT = 4.2;        // ナレーション出現
+  var STAR_AT = 8.6, STAR_LEN = 1.15; // 流れ星
+  var SCENE_W = 1600, SCENE_H = 486, ASPECT = SCENE_W / SCENE_H;
+
+  var stage = document.getElementById('stage');
+  var bg = document.getElementById('bg');
+  var fx = document.getElementById('fx');
+  var ch = document.getElementById('char');
+  var bubble = document.getElementById('bubble');
+  var fade = document.getElementById('fade');
+  var hint = document.getElementById('hint');
+  var replayBtn = document.getElementById('replay');
+  var ctx = fx.getContext('2d');
+
+  var W = 0, H = 0, DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+
+  function resize() {
+    W = stage.clientWidth; H = stage.clientHeight;
+    fx.width = Math.round(SCENE_W * 0.75); fx.height = Math.round(SCENE_H * 0.75);
+    if (lastState) layout(0, lastState);
+  }
+
+  // キーフレーム補間（smoothstep）
+  function kf(t, keys) {
+    if (t <= keys[0][0]) return keys[0][1];
+    for (var i = 1; i < keys.length; i++) {
+      if (t <= keys[i][0]) {
+        var t0 = keys[i - 1][0], v0 = keys[i - 1][1];
+        var t1 = keys[i][0], v1 = keys[i][1];
+        var u = (t - t0) / (t1 - t0);
+        u = u * u * (3 - 2 * u);
+        return v0 + (v1 - v0) * u;
+      }
+    }
+    return keys[keys.length - 1][1];
+  }
+
+  // 星（きらめき）の種：シーン座標（0..1）で保持。窓の空の範囲に分布
+  var stars = [];
+  (function seedStars() {
+    var rnd = (function () { var s = 1234567; return function () { s = (s * 16807) % 2147483647; return s / 2147483647; }; })();
+    for (var i = 0; i < 46; i++) {
+      stars.push({
+        x: 0.015 + rnd() * 0.585,          // 空（窓）の範囲
+        y: 0.03 + rnd() * 0.52,
+        r: 0.7 + rnd() * 1.6,
+        sp: 0.6 + rnd() * 1.8,
+        ph: rnd() * Math.PI * 2,
+        cross: rnd() < 0.22
+      });
+    }
+  })();
+
+  function drawFx(t, cw, chh) {
+    ctx.clearRect(0, 0, cw, chh);
+    var sx = cw / SCENE_W, sy = chh / SCENE_H;
+    // 月のほのかなグロー（原画の月位置 0.241, 0.615）
+    var pulse = 0.5 + 0.5 * Math.sin(t * 0.9);
+    var mx = 0.241 * SCENE_W * sx, my = 0.615 * SCENE_H * sy;
+    var mr = (30 + 10 * pulse) * sx;
+    var g = ctx.createRadialGradient(mx, my, 0, mx, my, mr);
+    g.addColorStop(0, 'rgba(255,244,200,' + (0.16 + 0.08 * pulse).toFixed(3) + ')');
+    g.addColorStop(1, 'rgba(255,244,200,0)');
+    ctx.fillStyle = g;
+    ctx.fillRect(mx - mr, my - mr, mr * 2, mr * 2);
+    // 星のまたたき
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i];
+      var a = 0.18 + 0.82 * Math.abs(Math.sin(t * s.sp + s.ph));
+      var x = s.x * SCENE_W * sx, y = s.y * SCENE_H * sy, r = s.r * sx;
+      ctx.fillStyle = 'rgba(255,252,235,' + (a * 0.9).toFixed(3) + ')';
+      ctx.beginPath(); ctx.arc(x, y, Math.max(r, 0.6), 0, Math.PI * 2); ctx.fill();
+      if (s.cross) {
+        ctx.strokeStyle = 'rgba(255,252,235,' + (a * 0.55).toFixed(3) + ')';
+        ctx.lineWidth = Math.max(1, r * 0.45);
+        var L = r * 4.2;
+        ctx.beginPath();
+        ctx.moveTo(x - L, y); ctx.lineTo(x + L, y);
+        ctx.moveTo(x, y - L); ctx.lineTo(x, y + L);
+        ctx.stroke();
+      }
+    }
+    // 流れ星（STAR_AT 〜 +STAR_LEN）
+    if (t >= STAR_AT && t <= STAR_AT + STAR_LEN) {
+      var u = (t - STAR_AT) / STAR_LEN;
+      var hx = (0.08 + 0.30 * u) * SCENE_W * sx;
+      var hy = (0.10 + 0.17 * u) * SCENE_H * sy;
+      var tail = 0.09 * SCENE_W * sx;
+      var fadeA = Math.sin(u * Math.PI);
+      var lg = ctx.createLinearGradient(hx - tail, hy - tail * 0.55, hx, hy);
+      lg.addColorStop(0, 'rgba(255,255,255,0)');
+      lg.addColorStop(1, 'rgba(255,255,255,' + (0.85 * fadeA).toFixed(3) + ')');
+      ctx.strokeStyle = lg; ctx.lineWidth = 2; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(hx - tail, hy - tail * 0.55); ctx.lineTo(hx, hy); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,' + (0.9 * fadeA).toFixed(3) + ')';
+      ctx.beginPath(); ctx.arc(hx, hy, 1.8, 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  var lastState = null;
+  function layout(t, st) {
+    if (!W) return;
+    var Hs = H * 1.28 * st.z, Ws = Hs * ASPECT;
+    // パララックス係数は輪郭の二重像が出ない範囲に抑制（bg 0.994 / fx 0.997 / char 1.0）
+    place(bg, 0.994, st, Ws, Hs, 0);
+    place(fx, 0.997, st, Ws, Hs, 0);
+    var bob = Math.sin(t * (Math.PI * 2 / 4.6)) * 1.8;   // 呼吸のような浮遊
+    place(ch, 1.0, st, Ws, Hs, bob);
+    drawFx(t, fx.width, fx.height);
+    // 吹き出しはカメラにゆるく追従（transformとは別プロパティでtransitionに干渉させない）
+    bubble.style.translate = (-(st.f - 0.33) * 26).toFixed(1) + 'px 0px';
+  }
+  function place(el, k, st, Ws, Hs, extraY) {
+    var fxFrac = 0.5 + (st.f - 0.5) * k;
+    var fyFrac = 0.5 + (st.fy - 0.5) * k;
+    var x = W / 2 - fxFrac * Ws;
+    var y = H / 2 - fyFrac * Hs + extraY;
+    el.style.width = Ws + 'px';
+    el.style.height = Hs + 'px';
+    el.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
+  }
+
+  function stateAt(t) {
+    return {
+      f: kf(t, [[0, 0.33], [6, 0.44], [DUR, 0.585]]),
+      fy: kf(t, [[0, 0.52], [DUR, 0.465]]),
+      z: kf(t, [[0, 1.0], [DUR, 1.13]])
+    };
+  }
+
+  var startStamp = null, offset = 0, ended = false, bubbleShown = false;
+  function nowT(ts) { return offset + (ts - startStamp) / 1000; }
+
+  function frame(ts) {
+    if (startStamp === null) startStamp = ts;
+    var t = nowT(ts);
+    var tc = Math.min(t, DUR);
+    var st = stateAt(tc);
+    lastState = st;
+    layout(tc === DUR ? t : tc, st);  // 終了後もまたたき・呼吸は続ける
+    fade.style.opacity = String(Math.max(0, 1 - t / 1.2));
+    if (!bubbleShown && t >= BUBBLE_AT) {
+      bubbleShown = true;
+      bubble.classList.add('show');
+    }
+    if (!ended && t >= DUR) {
+      ended = true;
+      replayBtn.classList.add('pulse');
+      hint.textContent = '再生が終わりました。↻ もう一度 でリプレイできます（タップでも最初から）';
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function jumpTo(target) {
+    // 現在時刻を target に合わせる（startStamp をずらす）
+    var t = startStamp === null ? 0 : nowT(performance.now());
+    offset += (target - t);
+    if (target < BUBBLE_AT && bubbleShown) { bubbleShown = false; bubble.classList.remove('show'); }
+    if (target >= BUBBLE_AT && !bubbleShown) { bubbleShown = true; bubble.classList.add('show'); }
+    if (target < DUR) { ended = false; replayBtn.classList.remove('pulse'); hint.textContent = '自動再生中…（ステージをタップすると先へ進みます）'; }
+  }
+
+  stage.addEventListener('click', function () {
+    if (reduced) return;
+    var t = startStamp === null ? 0 : nowT(performance.now());
+    if (t < BUBBLE_AT) jumpTo(BUBBLE_AT);
+    else if (t < DUR) jumpTo(DUR);
+    else jumpTo(0);
+  });
+  replayBtn.addEventListener('click', function () { jumpTo(0); });
+
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  window.addEventListener('resize', resize);
+  resize();
+  if (reduced) {
+    // 動きを抑える設定では最終状態を静止表示
+    offset = DUR; startStamp = performance.now();
+    bubbleShown = true; bubble.classList.add('show');
+    ended = true;
+    lastState = stateAt(DUR);
+    layout(0, lastState);
+    fade.style.opacity = '0';
+    hint.textContent = 'モーション抑制設定のため静止表示しています';
+  } else {
+    requestAnimationFrame(frame);
+  }
+})();
+</script>
+</body>
+</html>
