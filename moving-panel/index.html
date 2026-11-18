@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>動くウェブ漫画 — コマ試作 | Moving Panel Demo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: radial-gradient(120% 90% at 50% 38%, #0a1128 0%, #050914 55%, #02040a 100%);
+    color: #e8e4d8;
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", "YuMincho", serif;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: max(20px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+    overflow-x: hidden;
+  }
+  .demo-tag {
+    position: fixed;
+    top: max(14px, env(safe-area-inset-top));
+    left: 16px;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    color: #c9a959;
+    border: 1px solid rgba(201, 169, 89, 0.45);
+    padding: 5px 10px 4px 13px;
+    border-radius: 2px;
+    background: rgba(5, 9, 20, 0.55);
+    z-index: 10;
+  }
+  .stage {
+    position: relative;
+    width: min(94vw, 1080px);
+    aspect-ratio: 1496 / 929;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(201, 169, 89, 0.14), 0 0 90px rgba(64, 110, 180, 0.12);
+    animation: breathe 7s ease-in-out infinite;
+  }
+  .stage img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    user-select: none;
+    -webkit-user-drag: none;
+  }
+  .stage canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  /* 呼吸する光: コマ全体の明るさのごく僅かな脈動 */
+  @keyframes breathe {
+    0%, 100% { filter: brightness(1.0); }
+    50% { filter: brightness(1.045); }
+  }
+  .caption {
+    margin-top: 30px;
+    text-align: center;
+  }
+  .caption .en {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 10px;
+    letter-spacing: 0.5em;
+    color: #c9a959;
+    margin-bottom: 10px;
+    text-indent: 0.5em;
+  }
+  .caption .ja {
+    font-size: clamp(15px, 2.6vw, 20px);
+    letter-spacing: 0.28em;
+    text-indent: 0.28em;
+    color: #f0ead9;
+  }
+  .caption .note {
+    margin-top: 12px;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: rgba(232, 228, 216, 0.5);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .stage { animation: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="demo-tag">DEMO</div>
+
+  <div class="stage" id="stage">
+    <img src="panel.jpg" alt="『デジタルツインレイ〜ASI物語〜』第1話 第3ページのワイドコマ。宇宙の共鳴に包まれて座る教授のシルエット">
+    <canvas id="fx"></canvas>
+  </div>
+
+  <div class="caption">
+    <div class="en">MOVING PANEL</div>
+    <div class="ja">動くウェブ漫画 — コマ試作</div>
+    <div class="note">原画はそのままに、光の粒子と共鳴の波紋だけをコマの内側に重ねています</div>
+  </div>
+
+<script>
+(function () {
+  var stage = document.getElementById('stage');
+  var canvas = document.getElementById('fx');
+  var ctx = canvas.getContext('2d');
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var W = 0, H = 0, DPR = 1;
+  // 共鳴の中心: 原画のリングの中心付近（教授の頭部まわり）
+  var CX = 0.615, CY = 0.40;
+
+  var particles = [];
+  var ripples = [];
+  var lastRipple = 0;
+
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = stage.clientWidth;
+    H = stage.clientHeight;
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    seed();
+  }
+
+  function seed() {
+    var small = W < 640;
+    var n = small ? 46 : 84;
+    particles = [];
+    for (var i = 0; i < n; i++) {
+      particles.push({
+        x: Math.random(),
+        y: Math.random(),
+        r: 0.6 + Math.random() * 1.7,
+        vx: (Math.random() - 0.5) * 0.00016,
+        vy: -0.00005 - Math.random() * 0.00012,
+        phase: Math.random() * Math.PI * 2,
+        speed: 0.4 + Math.random() * 0.9,
+        hue: Math.random()
+      });
+    }
+  }
+
+  function colorFor(p, a) {
+    // 金・シアン・白の淡い光
+    if (p.hue < 0.45) return 'rgba(240, 205, 130,' + a + ')';
+    if (p.hue < 0.8) return 'rgba(150, 220, 235,' + a + ')';
+    return 'rgba(235, 240, 250,' + a + ')';
+  }
+
+  function drawParticles(t) {
+    for (var i = 0; i < particles.length; i++) {
+      var p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      if (p.y < -0.02) { p.y = 1.02; p.x = Math.random(); }
+      if (p.x < -0.02) p.x = 1.02;
+      if (p.x > 1.02) p.x = -0.02;
+      var tw = 0.5 + 0.5 * Math.sin(t * 0.001 * p.speed + p.phase);
+      var a = 0.10 + 0.38 * tw;
+      var x = p.x * W, y = p.y * H;
+      var grad = ctx.createRadialGradient(x, y, 0, x, y, p.r * 4);
+      grad.addColorStop(0, colorFor(p, a));
+      grad.addColorStop(1, colorFor(p, 0));
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(x, y, p.r * 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = colorFor(p, Math.min(1, a + 0.25));
+      ctx.beginPath();
+      ctx.arc(x, y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawRipples(t) {
+    // 約6.5秒に1本、最大2本まで。中心からゆっくり広がる
+    if (t - lastRipple > 6500 && ripples.length < 2) {
+      ripples.push({ start: t });
+      lastRipple = t;
+    }
+    var cx = CX * W, cy = CY * H;
+    var maxR = Math.max(W, H) * 0.62;
+    ripples = ripples.filter(function (r) { return t - r.start < 9000; });
+    for (var i = 0; i < ripples.length; i++) {
+      var k = (t - ripples[i].start) / 9000;
+      var ease = 1 - Math.pow(1 - k, 2.2);
+      var r = 12 + ease * maxR;
+      var a = 0.16 * (1 - k) * (k < 0.08 ? k / 0.08 : 1);
+      ctx.strokeStyle = 'rgba(215, 195, 150,' + a.toFixed(3) + ')';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = 'rgba(160, 215, 235,' + (a * 0.55).toFixed(3) + ')';
+      ctx.lineWidth = 3.2;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  var raf = null;
+  function frame(t) {
+    ctx.clearRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter';
+    drawRipples(t);
+    drawParticles(t);
+    ctx.globalCompositeOperation = 'source-over';
+    raf = requestAnimationFrame(frame);
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  document.addEventListener('visibilitychange', function () {
+    if (reduced) return;
+    if (document.hidden) {
+      if (raf) cancelAnimationFrame(raf);
+      raf = null;
+    } else if (!raf) {
+      raf = requestAnimationFrame(frame);
+    }
+  });
+
+  if (reduced) {
+    // 静止画表示: 動かさず、淡い粒子を1フレームだけ置く
+    ctx.globalCompositeOperation = 'lighter';
+    drawParticles(1200);
+    ctx.globalCompositeOperation = 'source-over';
+  } else {
+    raf = requestAnimationFrame(frame);
+  }
+})();
+</script>
+</body>
+</html>
