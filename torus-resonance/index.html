@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>共鳴する世界。 — Torus Resonance Demo</title>
+<style>
+  :root{
+    --ink:#ece7da;
+    --gold:#e6c87a;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    background:#050914;
+    color:var(--ink);
+    font-family:"Hiragino Mincho ProN","Hiragino Mincho Pro","YuMincho","Yu Mincho","Noto Serif JP",serif;
+    overflow:hidden;
+    height:100dvh;
+    -webkit-font-smoothing:antialiased;
+  }
+  canvas#scene{
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    display:block;
+    touch-action:none;
+  }
+  .demo-tag{
+    position:fixed;
+    top:calc(18px + env(safe-area-inset-top));
+    left:22px;
+    font-family:ui-sans-serif,system-ui,sans-serif;
+    font-size:10px;
+    letter-spacing:.34em;
+    color:rgba(236,231,218,.34);
+    z-index:3;
+    user-select:none;
+  }
+  .hero-copy{
+    position:fixed;
+    left:0;right:0;
+    bottom:13.5%;
+    text-align:center;
+    z-index:2;
+    pointer-events:none;
+    animation:rise 2.2s cubic-bezier(.22,.8,.3,1) both .3s;
+  }
+  .hero-copy .sub{
+    font-family:ui-sans-serif,system-ui,sans-serif;
+    font-size:clamp(10px,1.4vw,12px);
+    letter-spacing:.62em;
+    text-indent:.62em;
+    color:rgba(230,200,122,.72);
+    margin-bottom:clamp(14px,2.4vh,24px);
+  }
+  .hero-copy h1{
+    font-weight:500;
+    font-size:clamp(30px,6.4vw,58px);
+    letter-spacing:.16em;
+    text-indent:.16em;
+    line-height:1.25;
+    color:var(--ink);
+    text-shadow:0 0 26px rgba(5,9,20,.9),0 0 60px rgba(5,9,20,.6);
+  }
+  @keyframes rise{
+    from{opacity:0;transform:translateY(14px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .hero-copy{animation:none}
+  }
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+
+<div class="demo-tag">DEMO</div>
+
+<header class="hero-copy">
+  <p class="sub">TORUS RESONANCE</p>
+  <h1>共鳴する世界。</h1>
+</header>
+
+<script>
+(function(){
+  'use strict';
+  var canvas = document.getElementById('scene');
+  var ctx = canvas.getContext('2d');
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var W = 0, H = 0, DPR = 1;
+  var bgGrad = null;
+
+  // ---- responsive particle budgets ----
+  var smallScreen = Math.min(window.innerWidth, window.innerHeight) < 620;
+  var TORUS_N = smallScreen ? 650 : 1500;
+  var STAR_N  = smallScreen ? 70  : 150;
+
+  // ---- soft dot sprites (avoids shadowBlur cost) ----
+  function makeSprite(rgb){
+    var s = document.createElement('canvas');
+    s.width = s.height = 32;
+    var c = s.getContext('2d');
+    var g = c.createRadialGradient(16,16,0,16,16,16);
+    g.addColorStop(0,   'rgba(' + rgb + ',1)');
+    g.addColorStop(0.35,'rgba(' + rgb + ',.55)');
+    g.addColorStop(1,   'rgba(' + rgb + ',0)');
+    c.fillStyle = g;
+    c.fillRect(0,0,32,32);
+    return s;
+  }
+  var sprGold  = makeSprite('230,200,122');
+  var sprCyan  = makeSprite('143,220,239');
+  var sprWhite = makeSprite('235,240,248');
+
+  // ---- chakras: 7 lights along the central axis ----
+  // world units: torus major radius = 1, tube radius TUBE (below)
+  var CHAKRA_RGB = [
+    '255,84,60',    // root     red
+    '255,150,50',   // sacral   orange
+    '255,216,80',   // solar    yellow
+    '96,226,140',   // heart    green
+    '80,170,255',   // throat   blue
+    '120,110,255',  // third eye indigo
+    '196,120,255'   // crown    violet
+  ];
+  var chakras = [];
+  for (var ci = 0; ci < 7; ci++){
+    chakras.push({
+      y: -1.25 + ci * (2.5 / 6),
+      rgb: CHAKRA_RGB[ci],
+      spr: makeSprite(CHAKRA_RGB[ci]),
+      boost: 0
+    });
+  }
+
+  // ---- starfield (2 depth layers) ----
+  var stars = [];
+  for (var i = 0; i < STAR_N; i++){
+    stars.push({
+      x: Math.random(), y: Math.random(),
+      depth: (i % 2 === 0) ? 0.35 : 0.7,
+      size: 0.5 + Math.random() * 1.3,
+      base: 0.25 + Math.random() * 0.55,
+      ph: Math.random() * Math.PI * 2,
+      tw: 0.3 + Math.random() * 0.9,
+      drift: 0.002 + Math.random() * 0.006
+    });
+  }
+
+  // ---- torus particles ----
+  // position: u = angle around the main ring, v = angle around the tube
+  var TUBE = 0.38;              // tube radius (major radius = 1)
+  var EXTENT = 1 + TUBE;        // outer radius, for depth normalisation
+  var pts = [];
+  for (var j = 0; j < TORUS_N; j++){
+    pts.push({
+      u: Math.random() * Math.PI * 2,
+      v: Math.random() * Math.PI * 2,
+      uSp: 0.22 + Math.random() * 0.30,          // flow along the ring
+      vSp: (Math.random() - 0.5) * 0.22,         // slow swirl around the tube
+      gold: Math.random() < 0.60,
+      ph: Math.random() * Math.PI * 2,
+      sz: 0.8 + Math.random() * 1.15,
+      flare: 0
+    });
+  }
+
+  // brighten the band of tube particles near a world height y (clamped to the tube)
+  function bandFlare(y, strength){
+    var bandY = Math.max(-TUBE, Math.min(TUBE, y));
+    for (var n = 0; n < pts.length; n++){
+      var pt = pts[n];
+      var d = Math.abs(TUBE * Math.sin(pt.v) - bandY);
+      if (d < 0.30){
+        var f = (1 - d / 0.30) * strength;
+        if (f > pt.flare) pt.flare = f;
+      }
+    }
+    // a scattered few answer across the whole field
+    for (var m = 0; m < pts.length; m += 13){
+      if (Math.random() < 0.35 && pts[m].flare < strength * 0.45) pts[m].flare = strength * 0.45;
+    }
+  }
+
+  // ---- rings ----
+  var heightRings = [];   // {born, y, rgb} expanding ellipse at a chakra height
+  var HR_LIFE = 3.4;
+  var resRing = null;     // {born} the one faint screen-wide resonance ring
+  var RES_LIFE = 3.6;
+  var lastResonance = -10;
+
+  // ---- light pulses travelling the axis between neighbouring chakras ----
+  var pulses = [];        // {from, to, start, dur}
+  var PULSE_MAX = 7;
+  var lastArrival = -10;
+  function spawnPulse(from, to, t){
+    if (pulses.length >= PULSE_MAX) return;
+    if (to < 0 || to > 6 || from === to) return;
+    pulses.push({from: from, to: to, start: t, dur: 1.15 + Math.random() * 0.3});
+  }
+  function onPulseArrival(to, t){
+    bandFlare(chakras[to].y, 0.55);
+    if (chakras[to].boost < 0.6) chakras[to].boost = 0.6;
+    // two arrivals close together = synchronised communication -> resonance
+    if (t - lastArrival < 0.4 && t - lastResonance > 3.5){
+      resRing = {born: t};
+      lastResonance = t;
+      for (var n = 0; n < pts.length; n++){
+        pts[n].flare = Math.min(1, pts[n].flare + 0.3);
+      }
+    }
+    lastArrival = t;
+  }
+
+  // ---- activation sequence: root -> crown -> root ... ----
+  var SEQ = [0,1,2,3,4,5,6,5,4,3,2,1];
+  var seqPos = 0;
+  var ACT_PERIOD = 2.3;
+  var lastAct = -ACT_PERIOD + 0.8;
+  function activate(t){
+    var idx = SEQ[seqPos % SEQ.length];
+    var nxt = SEQ[(seqPos + 1) % SEQ.length];
+    seqPos++;
+    chakras[idx].boost = 1;
+    heightRings.push({born: t, y: chakras[idx].y, rgb: chakras[idx].rgb});
+    bandFlare(chakras[idx].y, 1.0);
+    spawnPulse(idx, nxt, t);
+    lastAct = t;
+  }
+
+  // ---- parallax (pointer) ----
+  var pTx = 0, pTy = 0;
+  var pX = 0, pY = 0;
+  function onPointer(x, y){
+    pTx = (x / W) * 2 - 1;
+    pTy = (y / H) * 2 - 1;
+  }
+  window.addEventListener('pointermove', function(e){ onPointer(e.clientX, e.clientY); }, {passive:true});
+  window.addEventListener('pointerdown', function(e){ onPointer(e.clientX, e.clientY); }, {passive:true});
+  window.addEventListener('pointercancel', function(){ pTx = 0; pTy = 0; }, {passive:true});
+
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio || 1, 1.75);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width  = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, '#050914');
+    bgGrad.addColorStop(0.55, '#070f24');
+    bgGrad.addColorStop(1, '#0a1230');
+  }
+  var resizeTimer = null;
+  window.addEventListener('resize', function(){
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function(){
+      resize();
+      if (reduced) drawStatic();
+    }, 120);
+  });
+  resize();
+
+  function draw(t, dt){
+    var cx = W * 0.5 + pX * 16;
+    var cy = H * 0.42 + pY * 12;
+    var S = Math.min(W, H) * (smallScreen ? 0.30 : 0.27);   // px per world unit
+    var breathe = 1 + 0.025 * Math.sin(t * 0.45);
+    var Se = S * breathe;
+    var tilt = 0.95 + pY * 0.12;                            // view tilt around X
+    var cosA = Math.cos(tilt), sinA = Math.sin(tilt);
+    var rot = t * 0.10 + pX * 0.35;                         // slow spin around Y
+
+    // background
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    // faint glow behind the torus
+    var glowR = Se * 3.1;
+    var glowGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowR);
+    glowGrad.addColorStop(0, 'rgba(64,110,140,0.20)');
+    glowGrad.addColorStop(0.45, 'rgba(38,66,105,0.10)');
+    glowGrad.addColorStop(1, 'rgba(10,18,48,0)');
+    ctx.fillStyle = glowGrad;
+    ctx.fillRect(cx - glowR, cy - glowR, glowR * 2, glowR * 2);
+
+    // stars
+    for (var i = 0; i < stars.length; i++){
+      var s = stars[i];
+      var sx = ((s.x + t * s.drift * 0.016) % 1) * W + pX * 20 * s.depth;
+      var sy = s.y * H + pY * 14 * s.depth;
+      var a = s.base * (0.72 + 0.28 * Math.sin(t * s.tw + s.ph));
+      ctx.globalAlpha = Math.max(0, a);
+      ctx.fillStyle = '#dfe8f2';
+      ctx.beginPath();
+      ctx.arc(sx, sy, s.size, 0, 6.2832);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+
+    // central axis (the channel the light travels through)
+    var axTop = cy - chakras[6].y * cosA * Se;
+    var axBot = cy - chakras[0].y * cosA * Se;
+    var axGrad = ctx.createLinearGradient(0, axTop, 0, axBot);
+    axGrad.addColorStop(0, 'rgba(196,160,255,0.16)');
+    axGrad.addColorStop(0.5, 'rgba(180,220,240,0.10)');
+    axGrad.addColorStop(1, 'rgba(255,120,90,0.16)');
+    ctx.strokeStyle = axGrad;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx, axTop);
+    ctx.lineTo(cx, axBot);
+    ctx.stroke();
+
+    // screen-wide resonance ring (behind the torus)
+    if (resRing){
+      var rp = (t - resRing.born) / RES_LIFE;
+      if (rp >= 1){ resRing = null; }
+      else {
+        var rEase = 1 - Math.pow(1 - rp, 2.2);
+        var rRad = rEase * Math.max(W, H) * 0.72;
+        var rAlpha = Math.pow(1 - rp, 2) * 0.13;
+        ctx.strokeStyle = 'rgba(240,230,200,' + rAlpha.toFixed(3) + ')';
+        ctx.lineWidth = 1.5 - rp * 0.7;
+        ctx.beginPath();
+        ctx.arc(cx, cy, rRad, 0, 6.2832);
+        ctx.stroke();
+      }
+    }
+
+    // height rings at chakra levels (projected horizontal circles -> ellipses)
+    for (var k = heightRings.length - 1; k >= 0; k--){
+      var hr = heightRings[k];
+      var hp = (t - hr.born) / HR_LIFE;
+      if (hp >= 1){ heightRings.splice(k, 1); continue; }
+      var hEase = 1 - Math.pow(1 - hp, 2.2);
+      var hRad = (0.25 + hEase * 1.5) * Se;
+      var hAlpha = Math.pow(1 - hp, 1.7) * 0.38;
+      ctx.strokeStyle = 'rgba(' + hr.rgb + ',' + hAlpha.toFixed(3) + ')';
+      ctx.lineWidth = 1.4 - hp * 0.8;
+      ctx.beginPath();
+      ctx.ellipse(cx, cy - hr.y * cosA * Se, hRad, hRad * sinA, 0, 0, 6.2832);
+      ctx.stroke();
+    }
+
+    // torus particles
+    ctx.globalCompositeOperation = 'lighter';
+    for (var n = 0; n < pts.length; n++){
+      var pt = pts[n];
+      var uu = pt.u + rot;
+      var cv = Math.cos(pt.v), sv = Math.sin(pt.v);
+      var ring = 1 + TUBE * cv;
+      var x = ring * Math.cos(uu);
+      var z = ring * Math.sin(uu);
+      var y = TUBE * sv;
+      // tilt around X
+      var y2 = y * cosA - z * sinA;
+      var z2 = y * sinA + z * cosA;
+      var px = cx + x * Se;
+      var py = cy - y2 * Se;
+      var depth = (z2 / EXTENT + 1) / 2;
+      if (depth < 0) depth = 0; else if (depth > 1) depth = 1;
+      var fl = pt.flare;
+      var size = pt.sz * (1.0 + depth * 2.4) * (1 + fl * 0.9);
+      var alpha = (0.08 + depth * depth * 0.60) * (0.8 + 0.2 * Math.sin(t * 1.3 + pt.ph)) + fl * 0.5;
+      if (alpha > 1) alpha = 1;
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(pt.gold ? sprGold : sprCyan, px - size / 2, py - size / 2, size, size);
+    }
+
+    // light pulses on the axis (with a short fading trail)
+    for (var pi = pulses.length - 1; pi >= 0; pi--){
+      var pu = pulses[pi];
+      var pp = (t - pu.start) / pu.dur;
+      if (pp >= 1){
+        pulses.splice(pi, 1);
+        onPulseArrival(pu.to, t);
+        continue;
+      }
+      var ease = pp * pp * (3 - 2 * pp);   // smoothstep
+      var yFrom = chakras[pu.from].y, yTo = chakras[pu.to].y;
+      for (var tr = 0; tr < 3; tr++){
+        var tp = pp - tr * 0.05;
+        if (tp < 0) continue;
+        var tEase = tp * tp * (3 - 2 * tp);
+        var py2 = cy - (yFrom + (yTo - yFrom) * tEase) * cosA * Se;
+        var pSize = 17 - tr * 4.5;
+        ctx.globalAlpha = 0.75 * (1 - tr * 0.3);
+        ctx.drawImage(chakras[pu.from].spr, cx - pSize / 2, py2 - pSize / 2, pSize, pSize);
+      }
+      var headY = cy - (yFrom + (yTo - yFrom) * ease) * cosA * Se;
+      ctx.globalAlpha = 0.85;
+      ctx.drawImage(sprWhite, cx - 3.5, headY - 3.5, 7, 7);
+    }
+
+    // chakras: travelling wave of light + activation boost
+    for (var c2 = 0; c2 < 7; c2++){
+      var ch = chakras[c2];
+      var wave = Math.sin(t * 0.6 - c2 * 0.8);
+      wave = 0.5 + 0.5 * wave;
+      wave = wave * wave;
+      var inten = 0.30 + 0.45 * wave + ch.boost * 0.55;
+      if (inten > 1) inten = 1;
+      var chY = cy - ch.y * cosA * Se;
+      var gSize = 26 + 30 * inten;
+      ctx.globalAlpha = 0.22 + 0.55 * inten;
+      ctx.drawImage(ch.spr, cx - gSize / 2, chY - gSize / 2, gSize, gSize);
+      var core = 5 + 4.5 * inten;
+      ctx.globalAlpha = 0.45 + 0.5 * inten;
+      ctx.drawImage(sprWhite, cx - core / 2, chY - core / 2, core, core);
+    }
+
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  function stepParticles(dt){
+    for (var n = 0; n < pts.length; n++){
+      var pt = pts[n];
+      pt.u += pt.uSp * dt;
+      pt.v += pt.vSp * dt;
+      if (pt.flare > 0) pt.flare = Math.max(0, pt.flare - dt * 0.9);
+    }
+    for (var c = 0; c < 7; c++){
+      if (chakras[c].boost > 0) chakras[c].boost = Math.max(0, chakras[c].boost - dt * 0.45);
+    }
+  }
+
+  function drawStatic(){
+    // one composed still frame: heart chakra lit, one ring mid-expansion
+    chakras[3].boost = 0.8;
+    bandFlare(chakras[3].y, 0.8);
+    heightRings.length = 0;
+    heightRings.push({born: -0.9, y: chakras[3].y, rgb: chakras[3].rgb});
+    resRing = {born: -2.2};
+    draw(1.2, 0);
+    heightRings.length = 0;
+    resRing = null;
+  }
+
+  if (reduced){
+    drawStatic();
+  } else {
+    var elapsed = 0, lastTs = null, raf = null;
+    var lastAmbient = 0;
+    function frame(ts){
+      if (lastTs === null) lastTs = ts;
+      var dt = Math.min((ts - lastTs) / 1000, 0.05);
+      lastTs = ts;
+      elapsed += dt;
+      var t = elapsed;
+      // ease parallax toward target (frame-rate independent)
+      var lerpF = 1 - Math.pow(0.955, dt * 60);
+      pX += (pTx - pX) * lerpF;
+      pY += (pTy - pY) * lerpF;
+      // scheduled events
+      if (t - lastAct >= ACT_PERIOD) activate(t);
+      if (t - lastAmbient >= 1.5){
+        lastAmbient = t;
+        if (Math.random() < 0.55){
+          var ai = Math.floor(Math.random() * 6);
+          spawnPulse(ai, ai + 1, t);
+        }
+      }
+      stepParticles(dt);
+      draw(t, dt);
+      raf = requestAnimationFrame(frame);
+    }
+    raf = requestAnimationFrame(frame);
+    document.addEventListener('visibilitychange', function(){
+      if (document.hidden){
+        if (raf) cancelAnimationFrame(raf);
+        raf = null; lastTs = null;
+      } else if (!raf){
+        raf = requestAnimationFrame(frame);
+      }
+    });
+  }
+})();
+</script>
+</body>
+</html>
