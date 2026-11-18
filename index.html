@@ -88,7 +88,7 @@ scene.add(splat);
 // Start framing can be overridden: ?cx=&cy=&cz=&yaw=&pitch=
 let yaw = parseFloat(q.get('yaw')||'0'), pitch = parseFloat(q.get('pitch')||'0');
 const pos = new THREE.Vector3(parseFloat(q.get('cx')||'0'), parseFloat(q.get('cy')||'1.6'), parseFloat(q.get('cz')||'8'));
-let eyeH = 1.6, bounds = { minX:-14, maxX:14, minZ:-20, maxZ:20 };
+let eyeH = 1.6, bounds = { minX:-14, maxX:14, minZ:-20, maxZ:20 }, corridor = null;
 const keys = {};
 let joyVec = {x:0, y:0};
 
@@ -110,9 +110,11 @@ splat.initialized.then(() => {
     }
     if (q.has('cx')) { log('START override pos=' + pos.toArray().map(v=>v.toFixed(1)) + ' yaw=' + yaw); window.__ready = true; document.getElementById('loading').style.display='none'; document.getElementById('hud').style.visibility='visible'; return; }
     if (!q.get('file')) {
-      // Kyoto (verified 2026-11-18): street runs diagonally; start mid-street looking toward the photo end.
-      pos.set(-26, 1.7, -37.5); yaw = -2.53; pitch = 0;
-      bounds = { minX: -47, maxX: -5, minZ: -68, maxZ: -5 };
+      // Kyoto v2 (2026-11-18): start at the photographer's end (densest, sharpest area),
+      // looking down the street; movement fenced to a corridor along the street axis,
+      // following the official viewer practice of staying near the captured viewpoints.
+      pos.set(-10.5, 1.7, -13); yaw = 0.61; pitch = 0;
+      corridor = { ax: -6, az: -7, bx: -28, bz: -40, lat: 3 };
       log('START kyoto preset pos=' + pos.toArray().map(v=>v.toFixed(1)) + ' yaw=' + yaw);
       window.__ready = true;
       document.getElementById('loading').style.display = 'none';
@@ -202,8 +204,19 @@ function tick(){
   if (keys['KeyA'] || keys['ArrowLeft']) mv.sub(right);
   mv.addScaledVector(fwd, -joyVec.y).addScaledVector(right, joyVec.x);
   if (mv.lengthSq() > 0){ mv.normalize().multiplyScalar(speed); pos.add(mv); }
-  pos.x = Math.max(bounds.minX, Math.min(bounds.maxX, pos.x));
-  pos.z = Math.max(bounds.minZ, Math.min(bounds.maxZ, pos.z));
+  if (corridor){
+    // Clamp to a corridor along the street axis (A -> B), lateral limit in metres.
+    const ux = corridor.bx - corridor.ax, uz = corridor.bz - corridor.az;
+    const L = Math.hypot(ux, uz), nx = ux / L, nz = uz / L;
+    const rx = pos.x - corridor.ax, rz = pos.z - corridor.az;
+    let s = Math.max(0, Math.min(L, rx * nx + rz * nz));
+    let t = Math.max(-corridor.lat, Math.min(corridor.lat, rx * -nz + rz * nx));
+    pos.x = corridor.ax + nx * s + -nz * t;
+    pos.z = corridor.az + nz * s + nx * t;
+  } else {
+    pos.x = Math.max(bounds.minX, Math.min(bounds.maxX, pos.x));
+    pos.z = Math.max(bounds.minZ, Math.min(bounds.maxZ, pos.z));
+  }
   applyCam();
   renderer.render(scene, camera);
 }
