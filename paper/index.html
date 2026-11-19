@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<link rel="icon" href="data:,">
+<title>D-Planet〜紙の星〜 テスト公開（触って判定用）</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #1c2420; overscroll-behavior: none; }
+  #atlas { display: block; width: 100%; height: 100%; touch-action: none; }
+  #hud {
+    position: fixed; left: 10px; top: 10px; z-index: 5;
+    font: 12px/1.7 "Hiragino Sans", "Noto Sans JP", sans-serif; color: #f2e3c4;
+    background: rgba(20, 26, 22, .55); padding: 6px 10px; border-radius: 8px;
+    pointer-events: none; white-space: pre;
+  }
+  #fade {
+    position: fixed; inset: 0; z-index: 9; background: #f7ecd2;
+    opacity: 0; pointer-events: none; transition: opacity .38s ease;
+  }
+  #loading {
+    position: fixed; inset: 0; z-index: 30; background: #1c2420; color: #f2e3c4;
+    display: flex; align-items: center; justify-content: center;
+    font: 15px/1.8 "Hiragino Sans", "Noto Sans JP", sans-serif; text-align: center; padding: 20px;
+    transition: opacity .5s ease;
+  }
+  #loading.done { opacity: 0; pointer-events: none; }
+  #hint {
+    position: fixed; left: 50%; bottom: 118px; transform: translateX(-50%); z-index: 6;
+    max-width: 86vw; text-align: center;
+    font: 13px/1.8 "Hiragino Sans", "Noto Sans JP", sans-serif; color: #fff8e8;
+    background: rgba(20, 26, 22, .68); padding: 8px 14px; border-radius: 999px;
+    pointer-events: none; transition: opacity .8s ease;
+  }
+  #hint.hide { opacity: 0; }
+  #joy {
+    position: fixed; left: 20px; bottom: 24px; width: 118px; height: 118px; z-index: 11;
+    border-radius: 50%; background: rgba(255, 248, 232, .10);
+    border: 1.5px solid rgba(255, 248, 232, .35); touch-action: none;
+  }
+  #stick {
+    position: absolute; left: 50%; top: 50%; width: 52px; height: 52px; border-radius: 50%;
+    background: rgba(255, 248, 232, .38); transform: translate(-50%, -50%); pointer-events: none;
+  }
+  #btns {
+    position: fixed; right: 14px; bottom: 24px; z-index: 11;
+    display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+  }
+  .tbtn {
+    font: 13px/1.4 "Hiragino Sans", "Noto Sans JP", sans-serif; color: #fff8e8;
+    background: rgba(20, 26, 22, .62); border: 1px solid rgba(255, 248, 232, .35);
+    border-radius: 999px; padding: 9px 14px; cursor: pointer; touch-action: none;
+    -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+  }
+  .tbtn:active { background: rgba(217, 164, 65, .55); }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./foundation/node_modules/three/build/three.module.js",
+    "three/addons/": "./foundation/node_modules/three/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<canvas id="atlas"></canvas>
+<div id="hud">D-Planet〜紙の星〜（テスト公開）</div>
+<div id="fade"></div>
+<div id="loading">紙の星を読み込み中…<br>（初回は少し時間がかかります）</div>
+<div id="hint">左下のスティックで歩けるよ 🚶 ドラッグで見回し、光る輪（ポータル）に近づくと別の場所へ移動するよ</div>
+<div id="joy"><div id="stick"></div></div>
+<div id="btns">
+  <button id="btnNight" class="tbtn" type="button">🌙 昼／夜</button>
+  <button id="btnPortal" class="tbtn" type="button">🌀 ポータル</button>
+  <button id="btnBoardNext" class="tbtn" type="button">掲示板 ▶</button>
+  <button id="btnBoardPrev" class="tbtn" type="button">◀ 掲示板</button>
+</div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
