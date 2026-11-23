@@ -51,10 +51,10 @@
     --line:rgba(133,116,74,.38);
     --line-soft:rgba(133,116,74,.20);
     --neon:#476b3f;
-    --neon-dim:#6d8a5f;
+    --neon-dim:#52703c;
     --text:#3d3226;
     --muted:#6f5f47;
-    --amber:#b07f2a;
+    --amber:#8a5f0c;
     --serif:"Noto Serif JP","Yu Mincho","Hiragino Mincho ProN",serif;
     --sans:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif;
     --gutter:clamp(24px,6.7vw,96px);
@@ -64,9 +64,13 @@
   html{scroll-behavior:smooth;scroll-padding-top:24px}
   body{
     margin:0;background:var(--bg);color:var(--text);
-    font-family:var(--sans);font-size:16px;line-height:2;
+    font-family:var(--sans);font-size:16px;line-height:2;line-break:strict;
     -webkit-font-smoothing:antialiased;overflow-x:hidden;
   }
+  @supports (word-break:auto-phrase){
+    body{word-break:auto-phrase}
+  }
+  h1,h2,h3{text-wrap:balance}
   img{display:block;max-width:100%}
   p,h1,h2,h3,figure{margin:0}
   a{color:inherit}
@@ -86,8 +90,8 @@
     font-size:13px;font-weight:700;letter-spacing:.06em;text-decoration:none;line-height:1.6;
     transition:background-color .2s ease,color .2s ease;
   }
-  .button span{font-size:19px;font-weight:400;line-height:1}
-  .button:hover{background:#7dffab}
+  .button span[aria-hidden="true"]{font-size:19px;font-weight:400;line-height:1}
+  .button:hover{background:#3a5a31}
   .button--outline{background:transparent;color:var(--text);border-color:rgba(133,116,74,.45)}
   .button--outline:hover{background:rgba(133,116,74,.1);color:var(--text)}
   .text-link{
@@ -148,19 +152,15 @@
   .has-bg>:not(.sec-bg){position:relative;z-index:1}
   .xfade-video{transition:opacity 1s linear}
   .xfade-back{opacity:0}
-  .shade--bonfire{
-    background:
-      linear-gradient(rgba(24,14,4,.72),rgba(24,14,4,.72)),
-      linear-gradient(90deg,rgba(24,14,4,.48),rgba(24,14,4,.10) 62%,rgba(24,14,4,0));
+  /* Bonfire video: no longer a full-bleed dark background — it sits as a
+     framed element inside the paper-toned definition section. */
+  .bonfire-frame{
+    position:relative;margin-top:34px;aspect-ratio:16/9;
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;
+    background:var(--bg-deep);
+    box-shadow:0 20px 38px -26px rgba(61,50,38,.5);
   }
-  /* The bonfire panel stays a warm evening scene inside the paper page:
-     light warm ink is scoped to this section only. */
-  #about{
-    --text:#f8f0da;--muted:#e2d2aa;--neon:#ffc46b;--neon-dim:#e8a94e;
-    --line:rgba(255,196,107,.42);--line-soft:rgba(255,196,107,.24);--panel:#241a0e;
-    color:var(--text);
-  }
-  .shade--ripple{background:linear-gradient(rgba(3,10,7,.84),rgba(3,10,7,.84))}
+  .bonfire-frame .bg-video{object-position:center}
   .gallery__item::after{
     content:"";position:absolute;inset:0;
     background:
@@ -170,7 +170,7 @@
   }
   .caption{position:relative;z-index:1}
   .hero-content{width:100%;padding:120px var(--gutter) 104px}
-  .hero-brand{display:flex;align-items:center;gap:16px;margin-bottom:30px}
+  .hero-brand{display:flex;align-items:center;gap:16px;margin-bottom:30px;background:rgba(247,242,231,.88);border:1px solid var(--line);border-radius:16px;padding:10px 18px 10px 10px;width:max-content;max-width:100%}
   .hero-brand img{width:52px;height:52px;border-radius:14px}
   .hero-brand .hero-sub{margin:0}
   .hero h1{
@@ -178,6 +178,8 @@
     font-size:clamp(56px,8vw,104px);line-height:1.15;letter-spacing:-.03em;
   }
   .hero-sub{color:var(--muted);font-size:15px;letter-spacing:.08em;margin-top:14px;line-height:1.9}
+  /* Paper halo so hero text stays legible over the diorama art */
+  .hero-content h1,.hero-content .hero-sub,.hero-content .hero-meta,.hero-content .hero-oneline{text-shadow:0 0 8px rgba(247,242,231,.95),0 0 20px rgba(247,242,231,.88),0 0 36px rgba(247,242,231,.75)}
   .hero-meta{color:var(--text);font-size:12px;letter-spacing:.1em;margin-top:22px;line-height:1.8}
   .hero-actions{margin-top:34px}
   .hero-oneline{
@@ -209,13 +211,6 @@
   .stat .lbl{font-size:.82rem;color:var(--muted);margin-top:.45rem;letter-spacing:.04em;line-height:1.8}
   @media(min-width:860px){.stats-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 
-  /* ---- cyber texture: thin linear grid + linear sheen (existing-parts style) ---- */
-  .features,.steps-sec,.aiqs-link,.campaign,.journey-sec{
-    background-image:
-      linear-gradient(rgba(133,116,74,.045) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(133,116,74,.045) 1px, transparent 1px);
-    background-size:44px 44px;
-  }
   .stats{background:linear-gradient(180deg, transparent, rgba(133,116,74,.03) 55%, transparent)}
 
   /* ================= Editorial grids ================= */
@@ -314,7 +309,7 @@
   .feature-list .k{font-size:.7rem;letter-spacing:.18em;color:var(--neon);font-weight:700;line-height:1.7;margin-bottom:6px}
   .feature-list li{transition:background-color .25s ease, box-shadow .25s ease}
   .feature-list li:hover{background:rgba(133,116,74,.05);box-shadow:inset 3px 0 0 var(--neon)}
-  .feature-list li:hover .feature-number{color:var(--neon);text-shadow:0 0 14px rgba(133,116,74,.85)}
+  .feature-list li:hover .feature-number{color:var(--neon)}
   .feature-list p{font-size:16px;line-height:2;color:var(--muted)}
   .feature-list p + p{margin-top:8px}
   .feature-list .big{font-size:1.35rem;font-weight:900;color:var(--text);line-height:1.5}
@@ -347,7 +342,7 @@
   .steps-list h3{font-size:16px;font-weight:700;line-height:1.8}
   .steps-list li{transition:background-color .25s ease, box-shadow .25s ease}
   .steps-list li:hover{background:rgba(133,116,74,.05);box-shadow:inset 3px 0 0 var(--neon)}
-  .steps-list li:hover .feature-number{color:var(--neon);text-shadow:0 0 14px rgba(133,116,74,.85)}
+  .steps-list li:hover .feature-number{color:var(--neon)}
   .steps-list p{font-size:16px;line-height:2;color:var(--muted);max-width:600px}
 
   /* ================= Journey （過ごし方） ================= */
@@ -366,11 +361,7 @@
   .entry{
     position:relative;color:var(--text);
     padding:128px 0 104px;border-top:1px solid var(--line);
-    background:
-      linear-gradient(rgba(133,116,74,.05) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(133,116,74,.05) 1px, transparent 1px),
-      linear-gradient(165deg,#f1e7cd 0%, var(--panel) 52%, #eee0bf 100%);
-    background-size:44px 44px,44px 44px,100% 100%;
+    background:linear-gradient(165deg,#f1e7cd 0%, var(--panel) 52%, #eee0bf 100%);
   }
   .entry::before{
     content:"";position:absolute;z-index:2;top:-1px;left:0;right:0;height:2px;
@@ -392,17 +383,13 @@
   .features>.shell{position:relative;z-index:1}
   .aiqs-link{
     background-image:
-      linear-gradient(115deg, rgba(133,116,74,.10), rgba(133,116,74,0) 42%, rgba(255,180,84,.07) 78%, rgba(133,116,74,0)),
-      linear-gradient(rgba(133,116,74,.045) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(133,116,74,.045) 1px, transparent 1px);
-    background-size:220% 220%,44px 44px,44px 44px;
+      linear-gradient(115deg, rgba(133,116,74,.10), rgba(133,116,74,0) 42%, rgba(255,180,84,.07) 78%, rgba(133,116,74,0));
+    background-size:220% 220%;
   }
-  @keyframes aiqs-drift{from{background-position:0% 40%,0 0,0 0}to{background-position:100% 60%,0 0,0 0}}
-  @keyframes grid-flow{from{background-position:0 0,0 0}to{background-position:0 44px,0 0}}
+  @keyframes aiqs-drift{from{background-position:0% 40%}to{background-position:100% 60%}}
   @keyframes kenburns{from{transform:scale(1.03) translate(0,0)}to{transform:scale(1.13) translate(-1.6%,-2.2%)}}
   @media(prefers-reduced-motion:no-preference){
     .aiqs-link{animation:aiqs-drift 16s ease-in-out infinite alternate}
-    .steps-sec,.journey-sec{animation:grid-flow 9s linear infinite}
     .view-frame img{animation:kenburns 26s ease-in-out infinite alternate}
     .hero-art{animation:kenburns 34s ease-in-out infinite alternate}
   }
@@ -454,7 +441,7 @@
       </figure>
       <div class="caption hero-content">
         <div class="hero-brand">
-          <img src="assets/icon.webp" width="320" height="320" alt="D-Planet アイコン（緑ネオンのDと惑星の輪）">
+          <img src="assets/icon.webp" width="320" height="320" alt="D-Planet アイコン（紙のDと惑星の輪）">
           <p class="hero-sub">テレパシースクール生のSNSアプリ</p>
         </div>
         <h1>D-Planet</h1>
@@ -472,34 +459,33 @@
     <div class="stat" data-reveal><div class="num"><small>月額</small> <span data-count="999">999</span><small>円</small></div><div class="lbl">システム利用料<br>＝テレスク入学</div></div>
     <div class="stat" data-reveal><div class="num"><small>毎月</small> <span data-count="3939">3,939</span><small>クレジット</small></div><div class="lbl">SIクレジット<br>（1クレジット＝1円）</div></div>
     <div class="stat" data-reveal><div class="num"><small>毎月</small> <span data-count="300">300</span><small>クレジット分</small></div><div class="lbl">みゅんとの自由会話の<span class="nw">無料枠</span><br>アップグレード特典</div></div>
-    <div class="stat" data-reveal><div class="num"><span data-count="100">100</span><small>レゾナ ＝ 1クレジット</small></div><div class="lbl">レゾナの換金レート</div></div>
+    <div class="stat" data-reveal><div class="num"><span data-count="100">100</span><small>レゾナ <span class="nw">＝ 1クレジット</span></small></div><div class="lbl">レゾナの換金レート</div></div>
   </div>
 </div>
 
 <!-- ================= D-Planetとは（定義） — project--intro ================= -->
-<section class="project project--intro has-bg" id="about">
-  <div class="sec-bg" aria-hidden="true">
-    <video class="bg-video xfade-video" data-xfade="a" data-xfade-group="bonfire" autoplay muted loop playsinline preload="metadata" poster="assets/bg-bonfire-poster.webp" tabindex="-1">
-      <source src="assets/bg-bonfire.webm" type="video/webm">
-      <source src="assets/bg-bonfire.mp4" type="video/mp4">
-    </video>
-    <video class="bg-video xfade-video xfade-back" data-xfade="b" data-xfade-group="bonfire" muted playsinline preload="auto" poster="assets/bg-bonfire-poster.webp" tabindex="-1">
-      <source src="assets/bg-bonfire.webm" type="video/webm">
-      <source src="assets/bg-bonfire.mp4" type="video/mp4">
-    </video>
-    <div class="bg-shade shade--bonfire"></div>
-  </div>
+<section class="project project--intro" id="about">
   <p class="eyebrow project__label" data-reveal>D-Planetとは</p>
   <h2 class="project__title" data-reveal>D-Planet<span class="accent">とは</span></h2>
   <div class="project__mission">
-    <p class="mission-lead" data-reveal>D-Planetは、テレパシースクール並びにメディスンホイールプログラムにご縁のあるソウルファミリー専用の完全招待制SNSです。</p>
-    <p data-reveal style="font-size:.8rem;color:var(--muted)">iboga.jp「テレスクについて」に掲載の、あさひの原文のまま。</p>
-    <p data-reveal>テレパシースクールに入学するとD-Planet空間でアバターを経てテレパシースクール生同志での遊びPLAYと祈りPRAYの共同創造の中でテレパシーのある日常生活から様々なことを学びます。</p>
+    <p class="mission-lead" data-reveal>D-Planetは、テレパシースクール<span class="nw">並びに</span><span class="nw">メディスンホイール</span><span class="nw">プログラム</span>にご縁のあるソウルファミリー<span class="nw">専用</span>の完全招待制SNSです。</p>
+    <p data-reveal style="font-size:.8rem;color:var(--muted)">iboga.jp「テレスクについて」に掲載の、あさひの<span class="nw">原文のまま</span>。</p>
+    <p data-reveal>テレパシースクールに入学するとD-Planet空間でアバターを経てテレパシースクール生同志での遊びPLAYと祈りPRAYの共同創造の中で<span class="nw">テレパシー</span>のある日常生活から様々なことを<span class="nw">学びます</span>。</p>
     <span class="src" data-reveal>出典：iboga.jp「テレスクについて」D-Planetセクション／申込ページ冒頭</span>
+    <figure class="bonfire-frame" data-reveal aria-hidden="true">
+      <video class="bg-video xfade-video" data-xfade="a" data-xfade-group="bonfire" autoplay muted loop playsinline preload="metadata" poster="assets/bg-bonfire-poster.webp" tabindex="-1">
+        <source src="assets/bg-bonfire.webm" type="video/webm">
+        <source src="assets/bg-bonfire.mp4" type="video/mp4">
+      </video>
+      <video class="bg-video xfade-video xfade-back" data-xfade="b" data-xfade-group="bonfire" muted playsinline preload="auto" poster="assets/bg-bonfire-poster.webp" tabindex="-1">
+        <source src="assets/bg-bonfire.webm" type="video/webm">
+        <source src="assets/bg-bonfire.mp4" type="video/mp4">
+      </video>
+    </figure>
   </div>
   <figure class="app-example" data-reveal>
-    <div class="app-example__frame"><img src="assets/icon.webp" width="320" height="320" alt="D-Planet アイコン（緑ネオンのDと惑星の輪）" loading="lazy"></div>
-    <figcaption>D-Planet アイコン（緑ネオンのDと惑星の輪）</figcaption>
+    <div class="app-example__frame"><img src="assets/icon.webp" width="320" height="320" alt="D-Planet アイコン（紙のDと惑星の輪）" loading="lazy"></div>
+    <figcaption>D-Planet アイコン（紙のDと惑星の輪）</figcaption>
   </figure>
 </section>
 
@@ -541,7 +527,7 @@
       <li data-reveal>
         <span class="feature-number">02</span>
         <div><p class="k">STEP 2 ― 入学</p><h3>アップグレード ＝ テレスク入学</h3></div>
-        <div><p class="big">月額 <em>999</em>円</p><p>アプリ内で月額999円（システム利用料）にアップグレードすると、テレパシースクール入学となります。年額3,716円の<span class="nw">プラン</span>もあります。</p></div>
+        <div><p class="big">月額 <em>999</em>円</p><p>アプリ内で月額999円（システム利用料）にアップグレードすると、<span class="nw">テレパシースクール</span>入学となります。<span class="nw">年額3,716円</span>の<span class="nw">プラン</span>もあります。</p></div>
       </li>
     </ul>
 
@@ -551,12 +537,12 @@
       <li data-reveal>
         <span class="feature-number">03</span>
         <div><p class="k">レゾナ投稿</p><h3>徳を積む投稿に、共鳴が集まる</h3></div>
-        <p>テレスクでの実践などの投稿（<span class="nw">レゾナ投稿</span>）へ反応が付くと、著者にレゾナが貯まります（1人1投稿につき1回まで）。</p>
+        <p>テレスクでの実践などの投稿（<span class="nw">レゾナ投稿</span>）へ反応が付くと、著者にレゾナが貯まります（1人1投稿につき<span class="nw">1回</span>まで）。</p>
       </li>
       <li data-reveal>
         <span class="feature-number">04</span>
         <div><p class="k">換金</p><h3>レゾナはクレジットになる</h3></div>
-        <div><p class="big"><em>100</em> レゾナ ＝ <em>1</em> クレジット</p><p>貯まったレゾナは、100レゾナ単位でAIQS SIクレジットに換金できます（換金は月500レゾナまで）。</p></div>
+        <div><p class="big"><em>100</em> レゾナ ＝ <em>1</em> クレジット</p><p>貯まったレゾナは、100レゾナ単位でAIQS SIクレジットに換金できます（換金は月500<span class="nw">レゾナまで</span>）。</p></div>
       </li>
       <li data-reveal>
         <span class="feature-number">05</span>
@@ -570,12 +556,12 @@
       </li>
       <li data-reveal>
         <span class="feature-number">07</span>
-        <h3>特典アイテム「メディスンホイールの紋章」</h3>
+        <h3>特典アイテム「<span class="nw">メディスンホイール</span>の紋章」</h3>
         <p>アップグレード特典のアイテムが付与されます。</p>
       </li>
       <li data-reveal>
         <span class="feature-number">08</span>
-        <h3>AIQS SI<span class="nw">クレジット</span> 毎月3,939<span class="nw">クレジット</span></h3>
+        <h3>AIQS SI<span class="nw">クレジット</span> <span class="nw">毎月3,939</span><span class="nw">クレジット</span></h3>
         <p>D-PlanetとAIQS SIで共通のクレジットが毎月付与されます。</p>
       </li>
       <li data-reveal>
@@ -586,7 +572,7 @@
       <li data-reveal>
         <span class="feature-number">10</span>
         <h3>有料コンテンツとサポート</h3>
-        <p>原文：「色々有料コンテンツ、サポートうけれる」</p>
+        <p>原文：「色々有料コンテンツ、<span class="nw">サポートうけれる</span>」</p>
       </li>
     </ul>
     <p class="section-lead" data-reveal>月額999円（システム利用料）で受けられる、確定済みの特典。</p>
@@ -594,7 +580,7 @@
       <div class="sec-bg" aria-hidden="true">
         <div class="paper-pond"><span class="pond-ring"></span><span class="pond-ring r2"></span><span class="pond-ring r3"></span></div>
       </div>
-      <p>レゾナ投稿への反応は、1人1投稿につき1回までで、自分の投稿には付けられません。付けたレゾナは取り消すことができ、付くと著者のレゾナ残高に+1されます。残高は「わたし」ページにクレジット残高と並んで表示され、100レゾナ＝1クレジットで、100レゾナ単位で手動で換金できます（換金は月500レゾナまで）。</p>
+      <p>レゾナ投稿への反応は、1人1投稿につき1回までで、自分の投稿には<span class="nw">付けられません</span>。付けたレゾナは<span class="nw">取り消すことができ</span>、付くと著者の<span class="nw">レゾナ</span>残高に<span class="nw">+1されます</span>。残高は「わたし」ページに<span class="nw">クレジット</span>残高と並んで<span class="nw">表示され</span>、100レゾナ<span class="nw">＝1クレジット</span>で、100<span class="nw">レゾナ</span>単位で手動で換金できます（換金は月500<span class="nw">レゾナまで</span>）。</p>
     </div>
   </div>
 </section>
@@ -605,18 +591,18 @@
     <div class="section-heading" data-reveal>
       <p class="eyebrow">過ごし方</p>
       <h2>D-Planetでの<span class="accent">過ごし方</span></h2>
-      <p class="section-lead">D-Planetに入ってからの、過ごし方の流れです。</p>
+      <p class="section-lead">D-Planetに入ってからの、過ごし方の<span class="nw">流れです</span>。</p>
     </div>
     <ol class="steps-list">
       <li data-reveal><span class="feature-number">1</span><div><h3>入る</h3><p>完全招待制・参加は無料。招待リンクから登録して、住人になります。</p></div></li>
-      <li data-reveal><span class="feature-number">2</span><div><h3>テストで腕試し</h3><p>テレスク道場のテストで、まずは腕試し。</p></div></li>
-      <li data-reveal><span class="feature-number">3</span><div><h3>コンテンツで学び、テストを受ける</h3><p>コンテンツで学習を進めて、教本の巻ごとの理解度テストを受けます。</p></div></li>
-      <li data-reveal><span class="feature-number">4</span><div><h3>世果ポイントを貯める</h3><p>テストで「はい」と答えた積み重ねが、霊性の経験値「世果ポイント」になります。</p></div></li>
+      <li data-reveal><span class="feature-number">2</span><div><h3>テストで腕試し</h3><p>テレスク道場のテストで、まずは<span class="nw">腕試し</span>。</p></div></li>
+      <li data-reveal><span class="feature-number">3</span><div><h3>コンテンツで学び、テストを受ける</h3><p>コンテンツで学習を進めて、教本の<span class="nw">巻ごと</span>の理解度テストを受けます。</p></div></li>
+      <li data-reveal><span class="feature-number">4</span><div><h3>世果ポイントを貯める</h3><p>テストで「はい」と答えた積み重ねが、霊性の経験値「世果ポイント」に<span class="nw">なります</span>。</p></div></li>
       <li data-reveal><span class="feature-number">5</span><div><h3>100世果ポイントで認定試験へ</h3><p>認定試験は、教授（あさひ）との個人／グループセッションです。</p></div></li>
-      <li data-reveal><span class="feature-number">6</span><div><h3>認定コードを入力して正式認定</h3><p>セッションで伝えられる認定申請コードを入力すると正式認定になり、アイテムがもらえます。認定されるとクレジットがプレゼントされ、アイクスSIが使えます。</p></div></li>
+      <li data-reveal><span class="feature-number">6</span><div><h3>認定コードを入力して正式認定</h3><p>セッションで伝えられる認定申請コードを入力すると正式認定になり、アイテムがもらえます。認定されるとクレジットがプレゼントされ、アイクスSIが<span class="nw">使えます</span>。</p></div></li>
       <li data-reveal><span class="feature-number">7</span><div><h3>友達を作って部活動</h3><p>仲間と部活を作り、部室で過ごします。</p></div></li>
-      <li data-reveal><span class="feature-number">8</span><div><h3>投稿の共鳴でレゾナが増える</h3><p>レゾナ投稿が共鳴を呼ぶとレゾナが増えます。レゾナは仲間に贈ることもできます。</p></div></li>
-      <li data-reveal><span class="feature-number">9</span><div><h3>セレモニー参加でレゾナ発行</h3><p>合同祭祀・オンラインセレモニーに参加すると、合言葉の入力でレゾナが発行されます（プルーフオブセレモニー）。</p></div></li>
+      <li data-reveal><span class="feature-number">8</span><div><h3>投稿の共鳴でレゾナが増える</h3><p>レゾナ投稿が共鳴を呼ぶとレゾナが<span class="nw">増えます</span>。レゾナは仲間に贈ることも<span class="nw">できます</span>。</p></div></li>
+      <li data-reveal><span class="feature-number">9</span><div><h3>セレモニー参加でレゾナ発行</h3><p>合同祭祀・オンラインセレモニーに参加すると、合言葉の入力でレゾナが<span class="nw">発行されます</span>（<span class="nw">プルーフオブセレモニー</span>）。</p></div></li>
       <li data-reveal><span class="feature-number">10</span><div><h3>善循環が加速する</h3><p>ASIが稼働するとデジタルな祈りも回り始めて、善循環が加速します。</p></div></li>
     </ol>
 
@@ -630,12 +616,12 @@
       <li data-reveal>
         <span class="feature-number">02</span>
         <h3>レゾナ</h3>
-        <p>投稿への共鳴やセレモニー参加で貯まります。仲間に贈れて、100レゾナ＝1クレジットに変換できます。</p>
+        <p>投稿への共鳴やセレモニー参加で貯まります。仲間に贈れて、100レゾナ<span class="nw">＝1クレジット</span>に変換できます。</p>
       </li>
       <li data-reveal>
         <span class="feature-number">03</span>
         <h3>クレジット</h3>
-        <p>AIQS SIと共通のクレジット。認定のプレゼントやレゾナの変換、毎月の特典で貯まります。</p>
+        <p>AIQS SIと共通のクレジット。認定の<span class="nw">プレゼント</span>やレゾナの変換、毎月の特典で貯まります。</p>
       </li>
     </ul>
     <p class="journey-note" data-reveal>3つの残高は、アプリ内のウォレットでまとめて確認できます。</p>
@@ -643,12 +629,12 @@
     <div class="journey-future">
       <p class="journey-sub" data-reveal>その先の地図 ― これから</p>
       <ol class="steps-list">
-        <li data-reveal><span class="feature-number">→</span><div><h3>現実世界と連動していく</h3><p>マーケットや現実世界との連動でコミュニティ実験を検証しながら、メディスンホイールプログラムを進めていきます。</p></div></li>
+        <li data-reveal><span class="feature-number">→</span><div><h3>現実世界と連動していく</h3><p>マーケットや現実世界との連動で<span class="nw">コミュニティ</span>実験を検証しながら、<span class="nw">メディスンホイール</span>プログラムを進めていきます。</p></div></li>
         <li data-reveal><span class="feature-number">→</span><div><h3>弥勒の世へ</h3><p>LLPに加盟し、現実世界を弥勒の世にしていきます。</p></div></li>
       </ol>
     </div>
 
-    <p class="statement" data-reveal>「クォンタムレゾナンシズムで動くD-Planetという、新しい地球の雛形オンラインコミュニティ」<span class="who">D-Planetの過ごし方 ― あさひ</span></p>
+    <p class="statement" data-reveal>「クォンタムレゾナンシズムで動くD-Planetという、新しい地球の雛形<span class="nw">オンラインコミュニティ</span>」<span class="who">D-Planetの過ごし方 ― あさひ</span></p>
   </div>
 </section>
 
@@ -656,7 +642,7 @@
 <section class="aiqs-link">
   <div class="shell">
     <div class="read" data-reveal>
-      <h2>AIQS SIクレジット <span class="accent">毎月3,939クレジット</span></h2>
+      <h2>AIQS SIクレジット <span class="accent nw">毎月3,939クレジット</span></h2>
       <p>D-PlanetとAIQS SIで共通のクレジットが毎月付与されます。</p>
       <div class="actions">
         <a class="button button--outline" href="https://aiqs.iboga.jp/">アイクス（AIQs）を見る<span aria-hidden="true">→</span></a>
@@ -681,7 +667,7 @@
       <li data-reveal>
         <span class="feature-number">02</span>
         <div><p class="k">AIQS SI 照射価格</p><h3>AIQS SIの照射が1回 3.9クレジット</h3></div>
-        <div><p class="big">1照射 <em>3.9</em>クレジット</p><p>照射は1回3.9クレジット（1クレジット＝1円）が現在の通常価格です。1回9秒、最大99回までまとめて照射できます。ユーザー数が過密すると、クレジット単価が上がる場合もあります。</p></div>
+        <div><p class="big">1照射 <em>3.9</em>クレジット</p><p>照射は1回3.9クレジット（1クレジット<span class="nw">＝1円</span>）が現在の通常価格です。1回9秒、最大99回までまとめて照射できます。ユーザー数が過密すると、クレジット単価が上がる場合もあります。</p></div>
       </li>
     </ul>
     <div class="actions" data-reveal>
@@ -698,8 +684,8 @@
       <p class="section-lead">招待から入学まで、4つのステップ。</p>
     </div>
     <ol class="steps-list">
-      <li data-reveal><span class="feature-number">1</span><div><h3>招待を受ける</h3><p>D-Planetは完全招待制。招待リンクを受け取ります。</p></div></li>
-      <li data-reveal><span class="feature-number">2</span><div><h3>D-Planetに参加</h3><p>無料で登録し、アバターで空間に入ります。</p></div></li>
+      <li data-reveal><span class="feature-number">1</span><div><h3>招待を受ける</h3><p>D-Planetは完全招待制。招待リンクを<span class="nw">受け取ります</span>。</p></div></li>
+      <li data-reveal><span class="feature-number">2</span><div><h3>D-Planetに参加</h3><p>無料で登録し、アバターで空間に<span class="nw">入ります</span>。</p></div></li>
       <li data-reveal><span class="feature-number">3</span><div><h3>アップグレード</h3><p>アプリ内でシステム利用料（月額999円／年額3,716円）を決済。</p></div></li>
       <li data-reveal><span class="feature-number">4</span><div><h3>テレスク入学</h3><p>アップグレード完了で入学。特典が自動で有効になります。</p></div></li>
     </ol>
@@ -711,10 +697,10 @@
   <img class="bg-art entry-art" src="assets/paper-center.webp" alt="" aria-hidden="true">
   <div class="bg-shade entry-shade" aria-hidden="true"></div>
   <div class="shell">
-    <p class="entry-lead" data-reveal>D-Planetは、ソウルファミリー専用の完全招待制SNSです。ご縁のある方の参加をお待ちしています。</p>
+    <p class="entry-lead" data-reveal>D-Planetは、ソウルファミリー専用の<span class="nw">完全招待制</span>SNSです。ご縁のある方の参加をお待ちしています。</p>
     <p class="entry-guide" data-reveal>招待リンクがない方は、井上朝陽とお友達になってから招待リンクを受け取ってください。インスタでメールを送ってコミュニケーションを取るとリアルにお友達になれます。</p>
     <div class="actions" data-reveal>
-      <a class="button button--outline" href="https://iboga.jp/orientation/">テレパシースクール学校説明会（オリエンテーション）はこちら<span aria-hidden="true">→</span></a>
+      <a class="button button--outline" href="https://iboga.jp/orientation/"><span>テレパシースクール学校説明会<span class="nw">（オリエンテーション）</span>はこちら</span><span aria-hidden="true">→</span></a>
     </div>
     <p class="cta-note" data-reveal>Stripeクレジットカード決済で申し込む（月額999円）</p>
     <div class="actions" data-reveal>
@@ -726,7 +712,7 @@
 
 <footer>
   <div class="shell">
-    <p>D-Planet アプリ：<a href="https://tschool.iboga.jp">tschool.iboga.jp</a> ／ テレパシースクール：<a href="https://iboga.jp">iboga.jp</a></p>
+    <p>D-Planet アプリ：<a href="https://tschool.iboga.jp">tschool.iboga.jp</a> ／ <span class="nw">テレパシースクール</span>：<a href="https://iboga.jp">iboga.jp</a></p>
   </div>
 </footer>
 
