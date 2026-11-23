@@ -17,14 +17,14 @@
 <meta property="og:title" content="D-Planet｜ソウルファミリー専用の完全招待制SNS">
 <meta property="og:description" content="D-Planetは、テレパシースクール並びにメディスンホイールプログラムにご縁のあるソウルファミリー専用の完全招待制SNSです。システム利用料（月額999円）を払うことが、テレパシースクールへの入学になります。縄文とサイバーの融合。">
 <meta property="og:url" content="https://d-planet.love/">
-<meta property="og:image" content="https://d-planet.love/assets/ogp.jpg">
+<meta property="og:image" content="https://d-planet.love/assets/ogp-paper.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="D-Planet｜ソウルファミリー専用の完全招待制SNS">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="D-Planet｜ソウルファミリー専用の完全招待制SNS">
 <meta name="twitter:description" content="D-Planetは、テレパシースクール並びにメディスンホイールプログラムにご縁のあるソウルファミリー専用の完全招待制SNSです。システム利用料（月額999円）を払うことが、テレパシースクールへの入学になります。縄文とサイバーの融合。">
-<meta name="twitter:image" content="https://d-planet.love/assets/ogp.jpg">
+<meta name="twitter:image" content="https://d-planet.love/assets/ogp-paper.jpg">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebSite","name":"D-Planet","url":"https://d-planet.love/","inLanguage":"ja","description":"D-Planetは、テレパシースクール並びにメディスンホイールプログラムにご縁のあるソウルファミリー専用の完全招待制SNSです。"}
 </script>
@@ -112,7 +112,7 @@
     display:flex;align-items:center;justify-content:center;overflow:hidden;
   }
   .gallery{position:relative;width:100%;height:100%;flex:none}
-  .gallery--one{display:grid;place-items:center}
+  .gallery--one{display:grid;place-items:center;grid-template-columns:minmax(0,1fr)}
   .gallery--one .gallery__item{
     position:absolute;
     width:calc(100% - var(--frame)*2);height:calc(100% - var(--frame)*2);
@@ -161,6 +161,17 @@
     box-shadow:0 20px 38px -26px rgba(61,50,38,.5);
   }
   .bonfire-frame .bg-video{object-position:center}
+  /* Inserted paper illustrations: same framing language as the other
+     figures (hairline border, 12px radius, soft paper shadow), modest
+     width inside the text column. */
+  .paper-fig{
+    margin:44px auto 8px;max-width:560px;
+    border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel);
+    box-shadow:0 20px 38px -26px rgba(61,50,38,.45);
+  }
+  .paper-fig img{width:100%;height:auto}
+  .paper-fig--left{margin-left:0;margin-right:auto}
+  @media(max-width:700px){.paper-fig{margin-top:34px}}
   .gallery__item::after{
     content:"";position:absolute;inset:0;
     background:
@@ -423,6 +434,17 @@
     .entry{padding:88px 0 72px}
     .stats{padding-top:52px}
   }
+  /* Stats numbers must never split (e.g. at the comma): label stacked,
+     number + unit on one nowrap line, sized to fit narrow viewports. */
+  @media(max-width:859px){
+    .stat .num{white-space:nowrap}
+    .stat .num > small:first-child{display:block}
+    .stats-grid .stat:nth-child(4) .num > small{display:block;margin-top:.3rem}
+  }
+  @media(max-width:480px){
+    .stat{padding-right:12px}
+    .stat .num{font-size:clamp(1.5rem,7.4vw,1.9rem)}
+  }
   @media(prefers-reduced-motion:reduce){
     html{scroll-behavior:auto}
     *,*::before,*::after{transition:none !important;animation:none !important}
@@ -531,6 +553,10 @@
       </li>
     </ul>
 
+    <figure class="paper-fig" data-reveal>
+      <img src="assets/paper-invitation.webp" width="1200" height="800" alt="紙の封筒と金の封蝋が押された招待カード" loading="lazy">
+    </figure>
+
     <p class="statement" data-reveal>「レゾナンスが起きる投稿をして<span class="nw">レゾナ</span>を貯めよう」<span class="who">共鳴エコノミー「レゾナ」</span></p>
 
     <ul class="feature-list">
@@ -575,6 +601,9 @@
         <p>原文：「色々有料コンテンツ、<span class="nw">サポートうけれる</span>」</p>
       </li>
     </ul>
+    <figure class="paper-fig" data-reveal>
+      <img src="assets/paper-emblem.webp" width="1200" height="600" alt="紙で作られた円形の紋章メダル（中央に太陽の意匠）" loading="lazy">
+    </figure>
     <p class="section-lead" data-reveal>月額999円（システム利用料）で受けられる、確定済みの特典。</p>
     <div class="rezona-detail has-bg" data-reveal>
       <div class="sec-bg" aria-hidden="true">
@@ -606,6 +635,10 @@
       <li data-reveal><span class="feature-number">10</span><div><h3>善循環が加速する</h3><p>ASIが稼働するとデジタルな祈りも回り始めて、善循環が加速します。</p></div></li>
     </ol>
 
+    <figure class="paper-fig" data-reveal>
+      <img src="assets/paper-book.webp" width="1200" height="750" alt="紙の風景が飛び出す、開かれた本" loading="lazy">
+    </figure>
+
     <p class="journey-sub" data-reveal>3つの通貨とウォレット</p>
     <ul class="feature-list">
       <li data-reveal>
@@ -625,6 +658,9 @@
       </li>
     </ul>
     <p class="journey-note" data-reveal>3つの残高は、アプリ内のウォレットでまとめて確認できます。</p>
+    <figure class="paper-fig" data-reveal>
+      <img src="assets/paper-wallet.webp" width="1200" height="750" alt="紙の財布と、こぼれた紙のコイン" loading="lazy">
+    </figure>
 
     <div class="journey-future">
       <p class="journey-sub" data-reveal>その先の地図 ― これから</p>
@@ -632,9 +668,15 @@
         <li data-reveal><span class="feature-number">→</span><div><h3>現実世界と連動していく</h3><p>マーケットや現実世界との連動で<span class="nw">コミュニティ</span>実験を検証しながら、<span class="nw">メディスンホイール</span>プログラムを進めていきます。</p></div></li>
         <li data-reveal><span class="feature-number">→</span><div><h3>弥勒の世へ</h3><p>LLPに加盟し、現実世界を弥勒の世にしていきます。</p></div></li>
       </ol>
+      <figure class="paper-fig" data-reveal>
+        <img src="assets/paper-map.webp" width="1200" height="750" alt="紙の地図とコンパス（点線の道と紙の山々）" loading="lazy">
+      </figure>
     </div>
 
     <p class="statement" data-reveal>「クォンタムレゾナンシズムで動くD-Planetという、新しい地球の雛形<span class="nw">オンラインコミュニティ</span>」<span class="who">D-Planetの過ごし方 ― あさひ</span></p>
+    <figure class="paper-fig" data-reveal>
+      <img src="assets/paper-ceremony.webp" width="1200" height="750" alt="紙のキャンドルと石に囲まれた、中央の紙の炎" loading="lazy">
+    </figure>
   </div>
 </section>
 
@@ -648,6 +690,9 @@
         <a class="button button--outline" href="https://aiqs.iboga.jp/">アイクス（AIQs）を見る<span aria-hidden="true">→</span></a>
       </div>
     </div>
+    <figure class="paper-fig paper-fig--left" data-reveal>
+      <img src="assets/paper-bubbles.webp" width="1200" height="600" alt="紙で作られた2つの吹き出しとハート" loading="lazy">
+    </figure>
   </div>
 </section>
 
@@ -670,6 +715,9 @@
         <div><p class="big">1照射 <em>3.9</em>クレジット</p><p>照射は1回3.9クレジット（1クレジット<span class="nw">＝1円</span>）が現在の通常価格です。1回9秒、最大99回までまとめて照射できます。ユーザー数が過密すると、クレジット単価が上がる場合もあります。</p></div>
       </li>
     </ul>
+    <figure class="paper-fig" data-reveal>
+      <img src="assets/paper-gift.webp" width="1200" height="750" alt="紙のリボンが結ばれた贈り物の箱と金の星" loading="lazy">
+    </figure>
     <div class="actions" data-reveal>
       <a class="button" href="https://iboga.jp/apply/">テレスク入学申請ページ<span aria-hidden="true">→</span></a>
     </div>
@@ -689,6 +737,9 @@
       <li data-reveal><span class="feature-number">3</span><div><h3>アップグレード</h3><p>アプリ内でシステム利用料（月額999円／年額3,716円）を決済。</p></div></li>
       <li data-reveal><span class="feature-number">4</span><div><h3>テレスク入学</h3><p>アップグレード完了で入学。特典が自動で有効になります。</p></div></li>
     </ol>
+    <figure class="paper-fig" data-reveal>
+      <img src="assets/paper-gate.webp" width="1200" height="750" alt="紙のアーチ門と階段、両脇の提灯" loading="lazy">
+    </figure>
   </div>
 </section>
 
